@@ -3,183 +3,145 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Garagens</title>
+  <title>NOC Dashboard - Garagens</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     /* =========================================================
-       TEMA APPLE (HUMAN INTERFACE GUIDELINES)
+       TEMA NOC / ZYLKER STYLE (DARK THEME)
        ========================================================= */
     :root {
-      /* Cores Padrão (Light Mode) */
-      --sys-bg: #F2F2F7;
-      --sys-card: #FFFFFF;
-      --sys-card-grouped: #FFFFFF;
-      --sys-text: #000000;
-      --sys-text-secondary: #8E8E93;
-      --sys-border: rgba(60, 60, 67, 0.18);
-      --sys-fill: rgba(120, 120, 128, 0.16);
-      --sys-nav-bg: rgba(255, 255, 255, 0.85);
+      --bg-color: #141a24;
+      --card-bg: #1c2431;
+      --card-border: #283344;
+      --text-main: #e2e8f0;
+      --text-muted: #8b98a9;
       
-      /* Cores de Ação (iOS System Colors) */
-      --apple-blue: #007AFF;
-      --apple-green: #34C759;
-      --apple-red: #FF3B30;
-      --apple-orange: #FF9500;
-      --apple-gray: #8E8E93;
-
-      --radius-lg: 16px;
-      --radius-md: 10px;
-      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05), 0 10px 15px -5px rgba(0,0,0,0.03);
-    }
-
-    @media (prefers-color-scheme: dark) {
-      :root {
-        /* Cores Modo Escuro (Dark Mode) */
-        --sys-bg: #000000;
-        --sys-card: #1C1C1E;
-        --sys-card-grouped: #1C1C1E;
-        --sys-text: #FFFFFF;
-        --sys-text-secondary: #EBEBF5;
-        --sys-border: rgba(84, 84, 88, 0.65);
-        --sys-fill: rgba(118, 118, 128, 0.24);
-        --sys-nav-bg: rgba(28, 28, 30, 0.85);
-
-        --apple-blue: #0A84FF;
-        --apple-green: #30D158;
-        --apple-red: #FF453A;
-        --apple-orange: #FF9F0A;
-      }
+      --color-ok: #00e676; /* Verde Neon */
+      --color-err: #ff3b30; /* Vermelho */
+      --color-warn: #ff9500; /* Laranja */
+      --color-chart: #00e5ff; /* Ciano Neon */
+      
+      --radius: 4px; /* Bordas levemente quadradas, estilo técnico */
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     
     body { 
         margin: 0; padding: 0; 
-        background-color: var(--sys-bg); 
-        color: var(--sys-text); 
-        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+        background-color: var(--bg-color); 
+        color: var(--text-main); 
+        font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
         min-height: 100vh;
-        padding-bottom: 60px;
+        font-size: 14px;
     }
 
-    .wrap { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
+    .wrap { max-width: 1400px; margin: 0 auto; padding: 0 16px; }
     .hidden { display: none !important; }
 
-    /* ---------- TIPOGRAFIA APPLE ---------- */
-    h1, h2, h3 { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; letter-spacing: -0.02em; margin: 0; }
-    .mono { font-variant-numeric: tabular-nums; } /* Números alinhados perfeitamente */
-
-    /* ---------- TELA DE LOGIN / RECUPERAÇÃO ---------- */
+    /* ---------- TELA DE LOGIN ---------- */
     .login-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
-    .login-card { background: var(--sys-card); width: 100%; max-width: 380px; padding: 40px 30px; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); text-align: center; }
-    .app-icon { width: 72px; height: 72px; background: linear-gradient(180deg, #32D74B 0%, #28A745 100%); border-radius: 16px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3); }
+    .login-card { background: var(--card-bg); width: 100%; max-width: 380px; padding: 40px 30px; border-radius: var(--radius); border: 1px solid var(--card-border); text-align: center; }
     
-    input { width: 100%; padding: 14px 16px; margin-top: 12px; border-radius: var(--radius-md); border: 1px solid var(--sys-border); background: var(--sys-bg); color: var(--sys-text); font-size: 17px; outline: none; transition: border-color 0.2s; }
-    input:focus { border-color: var(--apple-blue); }
+    input { width: 100%; padding: 12px 14px; margin-top: 12px; border-radius: var(--radius); border: 1px solid var(--card-border); background: var(--bg-color); color: var(--text-main); font-size: 14px; outline: none; }
+    input:focus { border-color: var(--color-chart); }
     
-    .btn-primary { width: 100%; padding: 14px; margin-top: 24px; border-radius: var(--radius-md); background: var(--apple-blue); color: #FFF; border: none; font-size: 17px; font-weight: 600; cursor: pointer; transition: 0.2s; }
-    .btn-primary:active { transform: scale(0.98); opacity: 0.9; }
+    .btn-primary { width: 100%; padding: 12px; margin-top: 24px; border-radius: var(--radius); background: var(--color-chart); color: #000; border: none; font-size: 14px; font-weight: 700; cursor: pointer; text-transform: uppercase; }
+    .btn-primary:active { opacity: 0.8; }
     
-    .btn-text { background: transparent; color: var(--apple-blue); border: none; padding: 10px; font-size: 15px; cursor: pointer; margin-top: 10px; font-weight: 500; }
-    .btn-text:active { opacity: 0.7; }
+    .btn-text { background: transparent; color: var(--text-muted); border: none; padding: 10px; font-size: 13px; cursor: pointer; margin-top: 10px; }
+    .btn-text:hover { color: var(--text-main); }
     
-    .aviso { padding: 10px; margin-top: 15px; font-size: 14px; font-weight: 500; border-radius: 8px; }
+    .aviso { padding: 10px; margin-top: 15px; font-size: 13px; font-weight: 500; border-radius: 4px; }
 
-    /* ---------- HEADER (NAVIGATION BAR iOS) ---------- */
-    .topbar { position: sticky; top: 0; background: var(--sys-nav-bg); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); border-bottom: 0.5px solid var(--sys-border); z-index: 50; padding: 16px; margin-bottom: 24px; margin-left: -16px; margin-right: -16px; display: flex; justify-content: space-between; align-items: center; }
-    .brand h1 { font-size: 28px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-    .role-badge { font-size: 11px; background: var(--sys-fill); padding: 4px 8px; border-radius: 12px; color: var(--sys-text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
-    .btn-voltar { background: transparent; color: var(--apple-blue); border: none; cursor: pointer; font-weight: 400; font-size: 17px; display: flex; align-items: center; gap: 4px; padding: 0 10px 0 0; }
-    .btn-voltar::before { content: '‹'; font-weight: 600; font-size: 22px; line-height: 1; }
+    /* ---------- HEADER (TOPBAR NOC) ---------- */
+    .topbar { background: var(--bg-color); border-bottom: 1px solid var(--card-border); padding: 12px 16px; margin-bottom: 20px; margin-left: -16px; margin-right: -16px; display: flex; justify-content: space-between; align-items: center; }
+    .brand h1 { font-size: 20px; font-weight: 400; margin: 0; display: flex; align-items: center; gap: 10px; color: #fff; }
+    .role-badge { font-size: 10px; background: var(--card-border); padding: 3px 6px; border-radius: 4px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; }
+    .last-update { font-size: 12px; color: var(--text-muted); margin-left: 10px; }
     
     .header-actions { display: flex; align-items: center; gap: 15px; }
-    .btn-logout { color: var(--apple-red); background: var(--sys-fill); border: none; padding: 6px 12px; border-radius: 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-icon { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px; position: relative; padding: 0; }
+    .btn-icon:hover { color: var(--text-main); }
+    .bell-badge { position: absolute; top: -5px; right: -5px; background: var(--color-err); color: white; font-size: 10px; font-weight: bold; min-width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .btn-logout { background: transparent; border: 1px solid var(--card-border); color: var(--text-muted); padding: 6px 12px; border-radius: var(--radius); font-size: 12px; cursor: pointer; transition: 0.2s; }
+    .btn-logout:hover { border-color: var(--color-err); color: var(--color-err); }
 
-    /* ---------- SINO DE NOTIFICAÇÃO ---------- */
-    .btn-bell { position: relative; background: transparent; border: none; font-size: 22px; cursor: pointer; color: var(--sys-text); padding: 0; }
-    .bell-badge { position: absolute; top: -4px; right: -6px; background: var(--apple-red); color: white; font-size: 11px; font-weight: bold; min-width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--sys-nav-bg); }
-
-    /* ---------- MODAL DE ALERTAS ---------- */
-    .alerts-panel { position: fixed; top: 70px; right: 16px; width: 340px; background: var(--sys-nav-bg); -webkit-backdrop-filter: blur(25px); backdrop-filter: blur(25px); border: 0.5px solid var(--sys-border); border-radius: var(--radius-lg); box-shadow: 0 20px 40px rgba(0,0,0,0.15); z-index: 9999; max-height: 400px; overflow-y: auto; display: none; }
-    .alerts-panel.active { display: block; animation: slideDown 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-    
-    .alerts-header { padding: 16px; border-bottom: 0.5px solid var(--sys-border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: inherit; }
-    .alerts-header h3 { font-size: 17px; margin: 0; }
-    .btn-clear { background: transparent; color: var(--apple-blue); border: none; font-size: 13px; cursor: pointer; font-weight: 500; }
-    .alert-item { padding: 12px 16px; border-bottom: 0.5px solid var(--sys-border); display: flex; justify-content: space-between; gap: 10px; font-size: 15px; }
-    .alert-item:last-child { border-bottom: none; }
-    .alert-time { font-size: 12px; color: var(--sys-text-secondary); margin-top: 4px; display: block; }
-    .btn-dismiss { background: var(--sys-fill); color: var(--sys-text); border: none; width: 26px; height: 26px; border-radius: 13px; font-size: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    /* ---------- FAIXA DE STATUS (STATUS STRIP INSPIRADA NA IMAGEM) ---------- */
+    .status-strip-container { background: var(--card-bg); border: 1px solid var(--card-border); padding: 12px; margin-bottom: 20px; border-radius: var(--radius); }
+    .status-strip-title { font-size: 12px; color: var(--text-main); margin-bottom: 10px; font-weight: 600; }
+    .status-blocks { display: flex; flex-wrap: wrap; gap: 6px; }
+    .status-block { padding: 4px 8px; font-size: 11px; font-weight: 700; color: #000; border-radius: 2px; cursor: pointer; user-select: none; }
+    .status-block.bg-ok { background-color: var(--color-ok); }
+    .status-block.bg-err { background-color: var(--color-err); color: #fff; }
+    .status-block.bg-warn { background-color: var(--color-warn); }
+    .status-block.bg-gray { background-color: var(--card-border); color: var(--text-muted); }
 
     /* ---------- CARDS (KPIs) ---------- */
-    .kpi-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .kpi { background: var(--sys-card); padding: 20px; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
-    .kpi-label { font-size: 13px; font-weight: 600; color: var(--sys-text-secondary); text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px; }
-    .kpi-value { font-size: 34px; font-weight: 700; margin-top: 8px; letter-spacing: -0.5px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .kpi-card { background: var(--card-bg); border: 1px solid var(--card-border); padding: 16px; border-radius: var(--radius); text-align: center; }
+    .kpi-title { font-size: 12px; color: var(--text-main); margin-bottom: 15px; }
+    .kpi-value { font-size: 32px; font-weight: 400; margin: 0; color: #fff; display: flex; align-items: baseline; justify-content: center; line-height: 1; }
+    .kpi-unit { font-size: 12px; color: var(--text-muted); margin-left: 4px; }
+    .kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 15px; }
+
+    /* ---------- CONTROLES E COMANDOS ---------- */
+    .panel-box { background: var(--card-bg); border: 1px solid var(--card-border); padding: 16px; border-radius: var(--radius); margin-bottom: 20px; }
+    .panel-title { font-size: 14px; color: var(--text-main); margin: 0 0 15px 0; font-weight: 600; }
     
-    /* Cores das KPIs */
-    .kpi-online .kpi-label::before { content: '●'; color: var(--apple-green); }
-    .kpi-offline .kpi-label::before { content: '●'; color: var(--apple-red); }
-    .kpi-tgs .kpi-label::before { content: '●'; color: var(--apple-blue); }
-    .kpi-fleet .kpi-label::before { content: '●'; color: var(--apple-orange); }
+    .filters-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .filters-row input { margin-top: 0; flex: 1; min-width: 150px; background: var(--bg-color); }
+    .btn-action { background: var(--card-border); color: var(--text-main); border: none; padding: 10px 16px; border-radius: var(--radius); font-size: 13px; cursor: pointer; transition: 0.2s; }
+    .btn-action:hover { background: var(--color-chart); color: #000; }
 
-    /* ---------- CONTROLES E FILTROS ---------- */
-    .section-title { font-size: 20px; font-weight: 700; margin: 32px 0 16px 0; }
-    .controls-panel { background: var(--sys-card); padding: 16px; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
-    .controls-panel input { margin-top: 0; flex: 1; min-width: 140px; }
-    .btn-secondary { background: var(--sys-fill); color: var(--apple-blue); border: none; padding: 14px 20px; border-radius: var(--radius-md); font-weight: 600; font-size: 15px; cursor: pointer; }
+    .cmd-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 15px; }
+    .btn-cmd { background: var(--bg-color); border: 1px solid var(--card-border); color: var(--text-main); border-radius: var(--radius); padding: 10px; font-size: 12px; cursor: pointer; text-align: left; transition: 0.2s; }
+    .btn-cmd:hover { border-color: var(--color-chart); color: var(--color-chart); }
+    .btn-cmd.danger { border-color: rgba(255, 59, 48, 0.3); color: var(--color-err); }
+    .btn-cmd.danger:hover { background: var(--color-err); color: #fff; border-color: var(--color-err); }
 
-    /* ---------- COMANDOS REMOTOS (ESTILO SETTINGS iOS) ---------- */
-    .cmd-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
-    .btn-cmd { background: var(--sys-card); border: 1px solid var(--sys-border); color: var(--sys-text); border-radius: var(--radius-md); padding: 14px; font-size: 14px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-sm); text-align: left; transition: background 0.2s; }
-    .btn-cmd:active { background: var(--sys-fill); }
-    .btn-cmd.danger { color: var(--apple-red); }
+    /* ---------- TABELAS ---------- */
+    .table-container { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th { font-size: 11px; text-transform: uppercase; color: var(--text-muted); text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--card-border); font-weight: 600; }
+    td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid var(--card-border); color: var(--text-main); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    
+    .txt-green { color: var(--color-ok); font-weight: bold; }
+    .txt-red { color: var(--color-err); font-weight: bold; }
+    .txt-gray { color: var(--text-muted); }
+    .mono { font-family: monospace; font-size: 14px; }
 
-    /* ---------- SEGMENTED CONTROL (ABAS) ---------- */
-    .segmented-control { background: var(--sys-fill); border-radius: 9px; padding: 2px; display: flex; width: fit-content; margin-bottom: 20px; }
-    .seg-item { padding: 6px 20px; font-size: 13px; font-weight: 600; color: var(--sys-text); cursor: pointer; border-radius: 7px; transition: 0.2s; }
-    .seg-item.active { background: var(--sys-card); box-shadow: 0 3px 8px rgba(0,0,0,0.12), 0 3px 1px rgba(0,0,0,0.04); }
+    /* ---------- CHARTS ---------- */
+    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .chart-box { background: var(--card-bg); padding: 16px; border-radius: var(--radius); border: 1px solid var(--card-border); height: 280px; }
+
+    /* ---------- ABAS ---------- */
+    .tabs { display: flex; gap: 2px; margin-bottom: 15px; border-bottom: 1px solid var(--card-border); }
+    .tab { padding: 8px 16px; font-size: 13px; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; }
+    .tab.active { color: var(--color-chart); border-bottom-color: var(--color-chart); font-weight: bold; }
     .view-section { display: none; }
     .view-section.active { display: block; animation: fadeIn 0.3s; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-    /* ---------- TABELAS (ESTILO LISTA GROUPED iOS) ---------- */
-    .table-wrapper { background: var(--sys-card-grouped); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
-    table { width: 100%; border-collapse: collapse; }
-    th { font-size: 12px; text-transform: uppercase; color: var(--sys-text-secondary); text-align: left; padding: 12px 16px; border-bottom: 0.5px solid var(--sys-border); font-weight: 600; background: var(--sys-bg); }
-    td { padding: 16px; font-size: 15px; border-bottom: 0.5px solid var(--sys-border); }
-    tr:last-child td { border-bottom: none; }
-    
-    .status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
-    .dot-green { background: var(--apple-green); box-shadow: 0 0 8px var(--apple-green); }
-    .dot-red { background: var(--apple-red); }
-    .dot-gray { background: var(--sys-text-secondary); }
+    /* ---------- MODAL DE ALERTAS ---------- */
+    .alerts-panel { position: fixed; top: 60px; right: 16px; width: 320px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 9999; max-height: 400px; overflow-y: auto; display: none; }
+    .alerts-panel.active { display: block; }
+    .alerts-header { padding: 12px 16px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--card-bg); }
+    .alert-item { padding: 12px 16px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; gap: 10px; font-size: 13px; background: var(--bg-color); }
+    .btn-dismiss { background: transparent; color: var(--text-muted); border: none; cursor: pointer; padding: 0; }
+    .btn-dismiss:hover { color: #fff; }
 
-    .tag { background: var(--sys-fill); color: var(--sys-text); padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; }
-    .tag-blue { background: rgba(0,122,255,0.1); color: var(--apple-blue); }
-
-    /* ---------- GRID VEÍCULOS ---------- */
-    .vehicle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; }
-    .v-card { background: var(--sys-card); padding: 16px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); border: 0.5px solid var(--sys-border); }
-    .v-id { font-size: 22px; font-weight: 700; color: var(--sys-text); display: flex; justify-content: space-between; align-items: center; }
-    .v-meta { font-size: 12px; color: var(--sys-text-secondary); margin-top: 8px; }
-
-    /* ---------- CHARTS ---------- */
-    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .chart-box { background: var(--sys-card); padding: 20px; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); height: 300px; }
-
-    /* ---------- RESPONSIVO ---------- */
+    /* ---------- RESPONSIVIDADE ---------- */
     @media (max-width: 768px) {
-        .topbar { flex-direction: column; align-items: flex-start; gap: 12px; margin-left: -20px; margin-right: -20px; padding: 16px 20px; }
-        .header-actions { width: 100%; justify-content: flex-end; position: absolute; right: 20px; top: 20px; }
-        .table-wrapper { overflow-x: auto; border-radius: 0; border-left: none; border-right: none; margin-left: -16px; margin-right: -16px; }
-        td, th { white-space: nowrap; }
+        .topbar { flex-direction: column; align-items: flex-start; gap: 10px; padding: 16px; }
+        .header-actions { position: absolute; right: 16px; top: 16px; }
+        .charts-grid { grid-template-columns: 1fr; }
+        .filters-row { flex-direction: column; align-items: stretch; }
+        .cmd-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -188,20 +150,13 @@
   <!-- ================= TELA DE LOGIN ================= -->
   <div id="login-screen" class="login-container">
       <div class="login-card">
-        <div class="app-icon">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M4 12a8 8 0 0 1 16 0" stroke="#FFF" stroke-width="2.5" stroke-linecap="round"/>
-                <path d="M7 12a5 5 0 0 1 10 0" stroke="#FFF" stroke-width="2.5" stroke-linecap="round"/>
-                <circle cx="12" cy="15" r="2.5" fill="#FFF"/>
-            </svg>
-        </div>
-        <h1 style="font-size: 24px; margin-bottom: 4px;">Monitoramento</h1>
-        <p style="color: var(--sys-text-secondary); font-size: 15px; margin-top: 0;">Iniciar Sessão</p>
+        <h1 style="color: #fff; margin-bottom: 5px;">Zylker Network</h1>
+        <p style="color: var(--text-muted); margin-top: 0;">Acesso NOC Central</p>
         
         <input type="email" id="email" placeholder="E-mail">
         <input type="password" id="password" placeholder="Senha" onkeyup="if(event.key === 'Enter') fazerLogin()">
         
-        <button class="btn-primary" onclick="fazerLogin()">Entrar</button>
+        <button class="btn-primary" onclick="fazerLogin()">Acessar Painel</button>
         <button class="btn-text" onclick="recuperarSenha()">Esqueceu a senha?</button>
         
         <div id="status-msg" class="aviso"></div>
@@ -211,101 +166,113 @@
   <!-- ================= TELA DE REDEFINIR SENHA ================= -->
   <div id="reset-password-screen" class="login-container hidden">
       <div class="login-card">
-        <h1 style="font-size: 24px;">Nova Senha</h1>
-        <p style="color: var(--sys-text-secondary); font-size: 15px;">Crie uma nova senha de acesso.</p>
-        
+        <h1 style="color: #fff;">Nova Senha</h1>
+        <p style="color: var(--text-muted);">Configure sua credencial de acesso.</p>
         <input type="password" id="new-password" placeholder="Mínimo 6 caracteres" onkeyup="if(event.key === 'Enter') salvarNovaSenha()">
-        <button class="btn-primary" onclick="salvarNovaSenha()">Salvar e Entrar</button>
+        <button class="btn-primary" onclick="salvarNovaSenha()">Salvar</button>
         <div id="reset-status-msg" class="aviso"></div>
       </div>
   </div>
 
-  <!-- ================= CAIXA DE ALERTAS (MODAL) ================= -->
+  <!-- ================= CAIXA DE ALERTAS ================= -->
   <div id="alerts-panel" class="alerts-panel">
       <div class="alerts-header">
-          <h3>Central de Alertas</h3>
-          <button class="btn-clear" onclick="marcarTodosLidos()">Limpar</button>
+          <h3 style="margin:0; font-size: 13px; color: #fff;">Alertas Críticos</h3>
+          <button class="btn-text" style="padding:0; margin:0;" onclick="marcarTodosLidos()">Limpar</button>
       </div>
       <div id="alerts-list">
-          <div style="padding: 24px; text-align: center; color: var(--sys-text-secondary); font-size: 15px;">Nenhum alerta.</div>
+          <div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 12px;">Nenhum alerta.</div>
       </div>
   </div>
 
-  <!-- ================= TELA MESTRE (ADMIN E MULTI-GARAGEM) ================= -->
+  <!-- ================= TELA MESTRE (ADMIN NOC) ================= -->
   <div id="admin-screen" class="hidden wrap">
     
     <div class="topbar">
         <div class="brand">
-            <h1>Visão Geral <span class="role-badge" id="mestre-role-badge">ADMIN</span></h1>
+            <h1>Zylker Network Dashboard <span class="role-badge" id="mestre-role-badge">ADMIN</span> <span class="last-update" id="master-last-update">Última atualização: --</span></h1>
         </div>
         <div class="header-actions">
-            <button class="btn-bell" onclick="toggleAlerts()">🔔<div id="bell-badge-admin" class="bell-badge hidden">0</div></button>
+            <button class="btn-icon" onclick="toggleAlerts()">🔔<div id="bell-badge-admin" class="bell-badge hidden">0</div></button>
             <button class="btn-logout" onclick="fazerLogout()">Sair</button>
         </div>
     </div>
 
-    <div class="kpi-strip">
-        <div class="kpi kpi-online">
-            <div class="kpi-label">Online Hoje</div>
-            <div class="kpi-value mono" id="kpi-online-total">0</div>
-        </div>
-        <div class="kpi kpi-offline">
-            <div class="kpi-label">Offline Hoje</div>
-            <div class="kpi-value mono" id="kpi-offline-total">0</div>
-        </div>
-        <div class="kpi kpi-tgs">
-            <div class="kpi-label">TGs Coletados</div>
-            <div class="kpi-value mono" id="kpi-tgs-total">0</div>
-        </div>
-        <div class="kpi kpi-fleet">
-            <div class="kpi-label">Garagens Ativas</div>
-            <div class="kpi-value mono" id="kpi-garagens-total">0</div>
+    <!-- FAIXA DE STATUS DOS MONITORES -->
+    <div class="status-strip-container">
+        <div class="status-strip-title">Status atual de todos os monitores (Garagens)</div>
+        <div class="status-blocks" id="status-blocks-container">
+            <!-- Blocos gerados via JS -->
+            <span style="color: var(--text-muted); font-size: 11px;">Carregando status...</span>
         </div>
     </div>
 
-    <div class="controls-panel">
+    <!-- KPIs -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-title">Veículos Online</div>
+            <div class="kpi-value"><span id="kpi-online-total">0</span><span class="kpi-unit">veículos</span></div>
+            <div class="kpi-sub">Comunicaram nas últimas 24h</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-title">Veículos Offline</div>
+            <div class="kpi-value"><span id="kpi-offline-total">0</span><span class="kpi-unit">veículos</span></div>
+            <div class="kpi-sub">Sem comunicação hoje</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-title">Tráfego de TGs</div>
+            <div class="kpi-value"><span id="kpi-tgs-total">0</span><span class="kpi-unit">arquivos</span></div>
+            <div class="kpi-sub">Recebidos na data filtrada</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-title">Monitoramento Ativo</div>
+            <div class="kpi-value"><span id="kpi-garagens-total">0</span><span class="kpi-unit">unids.</span></div>
+            <div class="kpi-sub">Garagens ativas reportando</div>
+        </div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="panel-box filters-row">
         <input type="date" id="date-selector-mestre">
-        <input type="text" id="filtro-garagem" placeholder="Buscar garagem...">
-        <button class="btn-secondary" id="btn-atualizar-mestre" onclick="atualizarTGsMestre()">Atualizar</button>
+        <input type="text" id="filtro-garagem" placeholder="Filtrar por nome do monitor...">
+        <button class="btn-action" id="btn-atualizar-mestre" onclick="atualizarTGsMestre()">Atualizar Dashboard</button>
     </div>
 
     <!-- PAINEL DE COMANDOS REMOTOS -->
-    <div id="panel-comandos-remotos" style="display: none;">
-        <h2 class="section-title">Ações Remotas</h2>
-        <div class="controls-panel" style="gap: 16px;">
-            <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--apple-blue); cursor: pointer;">
-                <input type="checkbox" onclick="toggleTodasGaragens()" style="width:18px; height:18px; margin:0;"> Selecionar Todas
-            </label>
-            <div id="cmd-server-list" style="display: flex; flex-wrap: wrap; gap: 12px; flex: 1;"></div>
+    <div class="panel-box" id="panel-comandos-remotos" style="display: none;">
+        <h2 class="panel-title">Execução de Scripts Remotos</h2>
+        <div style="margin-bottom: 15px; font-size: 12px; color: var(--text-muted);">
+            <label><input type="checkbox" onclick="toggleTodasGaragens()"> Selecionar todos os endpoints</label>
         </div>
+        <div id="cmd-server-list" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; max-height: 80px; overflow-y: auto;"></div>
 
         <div class="cmd-grid">
-            <button class="btn-cmd" onclick="dispararComando('reprocessar', true, 'Data para reprocessar (DD/MM/YYYY):')">🔄 Reprocessar Data</button>
-            <button class="btn-cmd" onclick="dispararComando('reiniciar_biometria')">👆 Reiniciar Biometria</button>
-            <button class="btn-cmd" onclick="dispararComando('criar_tsk', true, 'Prefixos para gerar TSK (vírgula):')">🛠️ Criar TSK</button>
-            <button class="btn-cmd" onclick="dispararComando('monitorar_tsk')">🔎 Monitorar TSK</button>
-            <button class="btn-cmd" onclick="dispararComando('relatorio_tsk')">📋 Relatório TSK</button>
-            <button class="btn-cmd" onclick="dispararComando('gerar_relatorio')">📊 Gerar Relatório</button>
-            <button class="btn-cmd" onclick="dispararComando('restart')">⚡ Restart V3LAN</button>
-            <button class="btn-cmd danger" onclick="dispararComando('reiniciar_pc')">💻 Reiniciar Servidor</button>
+            <button class="btn-cmd" onclick="dispararComando('reprocessar', true, 'Data (DD/MM/YYYY):')">> Reprocessar Data</button>
+            <button class="btn-cmd" onclick="dispararComando('reiniciar_biometria')">> Reiniciar Biometria</button>
+            <button class="btn-cmd" onclick="dispararComando('criar_tsk', true, 'Prefixos (vírgula):')">> Gerar TSK</button>
+            <button class="btn-cmd" onclick="dispararComando('monitorar_tsk')">> Monitorar TSK Agora</button>
+            <button class="btn-cmd" onclick="dispararComando('relatorio_tsk')">> Relatório TSK (3 dias)</button>
+            <button class="btn-cmd" onclick="dispararComando('gerar_relatorio')">> Gerar Relatório de Com.</button>
+            <button class="btn-cmd" onclick="dispararComando('restart')">> Restart Serviços (V3LAN)</button>
+            <button class="btn-cmd danger" onclick="dispararComando('reiniciar_pc')">! Reiniciar Endpoint (PC)</button>
         </div>
     </div>
 
-    <h2 class="section-title">Frota</h2>
-    <div class="table-wrapper">
+    <!-- TABELA -->
+    <div class="table-container">
         <table>
             <thead>
                 <tr>
+                    <th>Monitor</th>
                     <th>Status</th>
-                    <th>Garagem</th>
                     <th style="text-align: right;">Online</th>
                     <th style="text-align: right;">Offline</th>
-                    <th style="text-align: center;">TGs (<span id="tg-header-date"></span>)</th>
-                    <th style="text-align: right;"></th>
+                    <th style="text-align: center;">Pacotes (TGs)</th>
+                    <th style="text-align: right;">Ação</th>
                 </tr>
             </thead>
             <tbody id="admin-garages-list">
-                <tr><td colspan="6" style="text-align:center; padding: 30px;">Carregando...</td></tr>
+                <tr><td colspan="6" style="text-align:center;">Inicializando...</td></tr>
             </tbody>
         </table>
     </div>
@@ -316,59 +283,63 @@
     
     <div class="topbar">
         <div class="brand">
-            <button class="btn-voltar" onclick="voltarParaAdmin()">Voltar</button>
+            <h1><button style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; padding:0 10px 0 0;" onclick="voltarParaAdmin()">◀</button> 
+                <span id="garage-name-display">Monitor</span>
+            </h1>
+            <span class="last-update" id="last-update">Sincronizando...</span>
         </div>
-        <h1 style="font-size: 18px; position: absolute; left: 50%; transform: translateX(-50%); text-align: center; white-space: nowrap;">
-            <span id="garage-name-display">Garagem</span>
-            <span style="display:block; font-size: 11px; color: var(--sys-text-secondary); font-weight: 500;" id="last-update">Sincronizando...</span>
-        </h1>
         <div class="header-actions">
-            <button class="btn-bell" onclick="toggleAlerts()">🔔<div id="bell-badge-garage" class="bell-badge hidden">0</div></button>
+            <button class="btn-icon" onclick="toggleAlerts()">🔔<div id="bell-badge-garage" class="bell-badge hidden">0</div></button>
             <button class="btn-logout" onclick="fazerLogout()">Sair</button>
         </div>
     </div>
 
-    <div class="kpi-strip">
-        <div class="kpi kpi-online"><div class="kpi-label">Online</div><div class="kpi-value mono" id="kpi-online">0</div></div>
-        <div class="kpi kpi-offline"><div class="kpi-label">Offline</div><div class="kpi-value mono" id="kpi-offline">0</div></div>
-        <div class="kpi kpi-tgs"><div class="kpi-label">Erros</div><div class="kpi-value mono" id="kpi-critical" style="color: var(--apple-red);">0</div></div>
-        <div class="kpi kpi-fleet"><div class="kpi-label">Total</div><div class="kpi-value mono" id="kpi-total">0</div></div>
+    <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-title">Tráfego OK</div><div class="kpi-value"><span id="kpi-online">0</span></div><div class="kpi-sub">Nodes conectados</div></div>
+        <div class="kpi-card"><div class="kpi-title">Falta de Resposta</div><div class="kpi-value"><span id="kpi-offline">0</span></div><div class="kpi-sub">Nodes inativos</div></div>
+        <div class="kpi-card"><div class="kpi-title">Avisos / Erros</div><div class="kpi-value" style="color: var(--color-err);"><span id="kpi-critical">0</span></div><div class="kpi-sub">Logs de falha</div></div>
+        <div class="kpi-card"><div class="kpi-title">Nodes Monitorados</div><div class="kpi-value"><span id="kpi-total">0</span></div><div class="kpi-sub">Total de veículos</div></div>
     </div>
 
     <div class="charts-grid">
         <div class="chart-box">
-            <h3 style="margin-top:0; margin-bottom: 15px; font-size:16px;">Comunicação (15 Dias)</h3>
-            <div style="height: 230px;"><canvas id="trendChart"></canvas></div>
+            <div class="kpi-title">Tendência de Comunicação (15 Dias)</div>
+            <div style="height: 220px;"><canvas id="trendChart"></canvas></div>
         </div>
         <div class="chart-box">
-            <h3 style="margin-top:0; margin-bottom: 15px; font-size:16px;">Status Atual</h3>
-            <div style="height: 230px; position: relative;"><canvas id="statusChart"></canvas></div>
+            <div class="kpi-title">Uso de Tráfego Atual (Status)</div>
+            <div style="height: 220px; position: relative;"><canvas id="statusChart"></canvas></div>
         </div>
     </div>
 
-    <div class="segmented-control">
-        <div class="seg-item active" onclick="switchTab('tab-online')">Online</div>
-        <div class="seg-item" onclick="switchTab('tab-critical')">Com Erros</div>
-        <div class="seg-item" onclick="switchTab('tab-offline')">Offline</div>
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('tab-online')">Ativos</div>
+        <div class="tab" onclick="switchTab('tab-critical')">Logs de Erro</div>
+        <div class="tab" onclick="switchTab('tab-offline')">Sem Resposta</div>
     </div>
 
     <div id="tab-online" class="view-section active">
-        <div class="vehicle-grid" id="list-online"></div>
+        <div class="table-container">
+            <table>
+                <thead><tr><th>Node (Prefixo)</th><th>Último Ping</th><th>Versão | EOD</th></tr></thead>
+                <tbody id="list-online"></tbody>
+            </table>
+        </div>
     </div>
 
     <div id="tab-critical" class="view-section">
-        <div class="table-wrapper">
+        <div class="table-container">
             <table>
-                <thead><tr><th>Prefixo</th><th>Erro Reportado</th><th>Hora</th><th>Versão</th></tr></thead>
+                <thead><tr><th>Node</th><th>Exception/Log</th><th>Timestamp</th><th>Versão</th></tr></thead>
                 <tbody id="list-critical"></tbody>
             </table>
         </div>
     </div>
 
     <div id="tab-offline" class="view-section">
-        <div class="table-wrapper">
+        <div class="table-container">
             <table>
-                <thead><tr><th>Prefixo</th><th>Status</th><th>Última Comunicação</th></tr></thead>
+                <thead><tr><th>Node</th><th>Status</th><th>Último Visto</th></tr></thead>
                 <tbody id="list-offline"></tbody>
             </table>
         </div>
@@ -402,42 +373,42 @@
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
       
-      statusMsg.style.color = 'var(--apple-blue)';
-      statusMsg.innerText = "Autenticando...";
+      statusMsg.style.color = 'var(--color-chart)';
+      statusMsg.innerText = "Estabelecendo conexão...";
 
       const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
       if (error) {
-        statusMsg.style.color = 'var(--apple-red)';
-        statusMsg.innerText = "Acesso Negado: " + error.message;
+        statusMsg.style.color = 'var(--color-err)';
+        statusMsg.innerText = "Falha: " + error.message;
       } else {
-        statusMsg.style.color = 'var(--apple-green)';
-        statusMsg.innerText = "Acesso Liberado!";
+        statusMsg.style.color = 'var(--color-ok)';
+        statusMsg.innerText = "Conexão estabelecida!";
         verificarSessao();
       }
     }
 
     async function recuperarSenha() {
-      const emailDigitado = prompt("Digite o e-mail para recuperar a senha:");
+      const emailDigitado = prompt("Digite o e-mail para reset de credencial:");
       if (!emailDigitado || emailDigitado.trim() === "") return;
       
-      statusMsg.style.color = 'var(--apple-blue)';
-      statusMsg.innerText = "Enviando link...";
+      statusMsg.style.color = 'var(--color-chart)';
+      statusMsg.innerText = "Enviando pacote de recuperação...";
       const { data, error } = await supabaseClient.auth.resetPasswordForEmail(emailDigitado.trim(), { redirectTo: window.location.href });
-      if (error) { statusMsg.style.color = 'var(--apple-red)'; statusMsg.innerText = "Erro: " + error.message; } 
-      else { statusMsg.style.color = 'var(--apple-green)'; statusMsg.innerText = "Link de recuperação enviado!"; }
+      if (error) { statusMsg.style.color = 'var(--color-err)'; statusMsg.innerText = "Erro: " + error.message; } 
+      else { statusMsg.style.color = 'var(--color-ok)'; statusMsg.innerText = "Pacote enviado com sucesso!"; }
     }
 
     async function salvarNovaSenha() {
         const novaSenha = document.getElementById('new-password').value;
         const msg = document.getElementById('reset-status-msg');
-        if (!novaSenha || novaSenha.length < 6) { msg.style.color = 'var(--apple-orange)'; msg.innerText = "A senha requer 6 caracteres."; return; }
+        if (!novaSenha || novaSenha.length < 6) { msg.style.color = 'var(--color-warn)'; msg.innerText = "Requer mínimo de 6 bytes."; return; }
 
-        msg.style.color = 'var(--apple-blue)'; msg.innerText = "Atualizando...";
+        msg.style.color = 'var(--color-chart)'; msg.innerText = "Sincronizando nova credencial...";
         const { data, error } = await supabaseClient.auth.updateUser({ password: novaSenha });
 
-        if (error) { msg.style.color = 'var(--apple-red)'; msg.innerText = "Erro: " + error.message; } 
+        if (error) { msg.style.color = 'var(--color-err)'; msg.innerText = "Erro: " + error.message; } 
         else {
-            msg.style.color = 'var(--apple-green)'; msg.innerText = "Senha atualizada!";
+            msg.style.color = 'var(--color-ok)'; msg.innerText = "Credencial atualizada.";
             setTimeout(() => {
                 window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
                 document.getElementById('reset-password-screen').classList.add('hidden');
@@ -460,13 +431,13 @@
         
         const multiGaragens = perfil.garagens_acesso && perfil.garagens_acesso.length > 0;
         if (perfil.perfil === 'admin' || multiGaragens) { mostrarTelaMestreAdmin(); } 
-        else { abrirDashboardGaragem(perfil.garagem_id, "Garagem"); }
+        else { abrirDashboardGaragem(perfil.garagem_id, "Monitor " + perfil.garagem_id.substring(0,5)); }
 
         carregarAlertas();
         if(alertasInterval) clearInterval(alertasInterval);
         alertasInterval = setInterval(carregarAlertas, 15000);
       } else {
-          statusMsg.style.color = 'var(--apple-red)'; statusMsg.innerText = "Perfil não encontrado.";
+          statusMsg.style.color = 'var(--color-err)'; statusMsg.innerText = "Acesso negado: ID não mapeado.";
       }
     }
 
@@ -497,17 +468,17 @@
             data.forEach(a => {
                 const d = new Date(a.criado_em);
                 const t = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-                const g = (currentUserProfile.perfil === 'admin' || (currentUserProfile.garagens_acesso && currentUserProfile.garagens_acesso.length > 1)) ? `<strong style="color:var(--apple-blue)">${a.garagens?.nome_garagem}</strong><br>` : '';
+                const g = (currentUserProfile.perfil === 'admin' || (currentUserProfile.garagens_acesso && currentUserProfile.garagens_acesso.length > 1)) ? `<strong style="color:var(--color-chart)">[${a.garagens?.nome_garagem}]</strong> ` : '';
                 const m = a.mensagem.replace('🚨', '').replace('⚠️', '').replace('❌', '').trim();
                 
                 html += `<div class="alert-item" id="alert-${a.id}">
-                    <div style="flex:1; line-height:1.3;">${g}${m} <span class="alert-time">Hoje às ${t}</span></div>
+                    <div style="flex:1;">${g}${m} <br><span style="font-size:10px; color:var(--text-muted);">${t}</span></div>
                     <button class="btn-dismiss" onclick="marcarAlertaLido(${a.id})">✕</button>
                 </div>`;
             });
             document.getElementById('alerts-list').innerHTML = html;
         } else {
-            document.getElementById('alerts-list').innerHTML = `<div style="padding: 24px; text-align: center; color: var(--sys-text-secondary); font-size: 15px;">Nenhum alerta.</div>`;
+            document.getElementById('alerts-list').innerHTML = `<div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 12px;">Nenhum evento registrado.</div>`;
         }
     }
 
@@ -528,6 +499,11 @@
     // ----------------------------------------------------
     // MESTRE E COMANDOS
     // ----------------------------------------------------
+    function updateMasterTime() {
+        const now = new Date();
+        document.getElementById('master-last-update').innerText = `Atualizado: ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+    }
+
     async function mostrarTelaMestreAdmin() {
         document.getElementById('admin-screen').classList.remove('hidden');
         if (document.getElementById('panel-comandos-remotos')) { document.getElementById('panel-comandos-remotos').style.display = currentUserProfile.perfil === 'admin' ? 'block' : 'none'; }
@@ -550,20 +526,21 @@
 
     async function atualizarTGsMestre() {
         const dt = document.getElementById('date-selector-mestre').value; if(!dt) return;
-        const btn = document.getElementById('btn-atualizar-mestre'); if(btn) btn.innerText = "⏳";
+        const btn = document.getElementById('btn-atualizar-mestre'); if(btn) btn.innerText = "Buscando...";
 
         let qtg = supabaseClient.from('tgs_daily').select('*').eq('dt_iso', dt);
         if (currentUserProfile.perfil !== 'admin' && currentUserProfile.garagens_acesso) qtg = qtg.in('garagem_id', currentUserProfile.garagens_acesso);
         const { data: t } = await qtg; tgsMestre = t || [];
         
-        const [y, m, d] = dt.split('-'); document.getElementById('tg-header-date').innerText = `${d}/${m}`;
-        renderizarDadosMestre(); if(btn) btn.innerText = "Atualizar";
+        updateMasterTime();
+        renderizarDadosMestre(); if(btn) btn.innerText = "Atualizar Dashboard";
     }
 
     document.getElementById('filtro-garagem').addEventListener('input', renderizarDadosMestre);
 
     function renderizarDadosMestre() {
-        let html = ''; let tot = { on: 0, off: 0, tgs: 0, ativas: 0 }; let hist = {};
+        let htmlTable = ''; let htmlStrip = '';
+        let tot = { on: 0, off: 0, tgs: 0, ativas: 0 }; let hist = {};
         const filtro = document.getElementById('filtro-garagem').value.trim().toLowerCase();
 
         historicoMestre.forEach(h => {
@@ -579,20 +556,27 @@
 
             tot.on += on; tot.off += off; tot.tgs += tgC; if(on>0||off>0) tot.ativas++;
 
-            let dot = (on>0||off>0) ? 'dot-green' : 'dot-gray';
-            let tgT = tgC>0 ? `<span class="tag tag-blue">${tgC}</span>` : `<span class="tag">0</span>`;
+            // Configura Cor do Bloco do Topo (Status Strip)
+            let stClass = 'bg-gray';
+            if(on > 0 && off === 0) stClass = 'bg-ok';
+            else if(on > 0 && off > 0) stClass = 'bg-warn';
+            else if(on === 0 && off > 0) stClass = 'bg-err';
+            
+            htmlStrip += `<div class="status-block ${stClass}" title="${g.nome_garagem} - On:${on} Off:${off}" onclick="abrirDashboardGaragem('${g.id}', '${g.nome_garagem}')">${g.nome_garagem}</div>`;
 
-            html += `<tr>
-                <td><span class="status-dot ${dot}"></span>${(on>0||off>0)?'Ativa':'Inativa'}</td>
+            // Tabela
+            htmlTable += `<tr>
                 <td style="font-weight:600;">${g.nome_garagem}</td>
-                <td class="mono" style="text-align: right; color:${on>0?'var(--sys-text)':'var(--sys-text-secondary)'}">${on}</td>
-                <td class="mono" style="text-align: right; color:${off>0?'var(--apple-red)':'var(--sys-text-secondary)'}">${off}</td>
-                <td class="mono" style="text-align: center;">${tgT}</td>
-                <td style="text-align: right;"><button class="btn-secondary" style="padding: 6px 12px; font-size:13px;" onclick="abrirDashboardGaragem('${g.id}', '${g.nome_garagem}')">Abrir</button></td>
+                <td class="${stClass === 'bg-ok' ? 'txt-green' : (stClass === 'bg-gray' ? 'txt-gray' : 'txt-red')}">${(on>0||off>0)?'Operante':'S/ Sinal'}</td>
+                <td class="mono" style="text-align: right; color:${on>0?'#fff':'var(--text-muted)'}">${on}</td>
+                <td class="mono" style="text-align: right; color:${off>0?'var(--color-err)':'var(--text-muted)'}">${off}</td>
+                <td class="mono" style="text-align: center; color:var(--color-chart);">${tgC}</td>
+                <td style="text-align: right;"><button class="btn-action" onclick="abrirDashboardGaragem('${g.id}', '${g.nome_garagem}')">Ver →</button></td>
             </tr>`;
         });
 
-        document.getElementById('admin-garages-list').innerHTML = html || `<tr><td colspan="6" style="text-align:center; padding:30px; color:var(--sys-text-secondary)">Nada encontrado.</td></tr>`;
+        document.getElementById('status-blocks-container').innerHTML = htmlStrip || `<span style="color:var(--text-muted); font-size:11px;">Sem dados</span>`;
+        document.getElementById('admin-garages-list').innerHTML = htmlTable || `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted)">Sem registros.</td></tr>`;
         document.getElementById('kpi-online-total').innerText = tot.on; document.getElementById('kpi-offline-total').innerText = tot.off;
         document.getElementById('kpi-tgs-total').innerText = tot.tgs; document.getElementById('kpi-garagens-total').innerText = `${tot.ativas}/${listaGaragens.length}`;
     }
@@ -600,20 +584,20 @@
     let tM = false;
     function renderizarCheckboxesComandos() {
         let html = '';
-        listaGaragens.forEach(g => { html += `<label style="display:flex; align-items:center; gap:6px; font-size:13px;"><input type="checkbox" class="server-checkbox" value="${g.id}"> ${g.nome_garagem}</label>`; });
+        listaGaragens.forEach(g => { html += `<label style="display:flex; align-items:center; gap:4px; font-size:11px; background:var(--bg-color); padding:4px 8px; border-radius:4px;"><input type="checkbox" class="server-checkbox" value="${g.id}"> ${g.nome_garagem}</label>`; });
         document.getElementById('cmd-server-list').innerHTML = html;
     }
     function toggleTodasGaragens() { tM = !tM; document.querySelectorAll('.server-checkbox').forEach(cb => cb.checked = tM); }
 
     async function dispararComando(cmd, req = false, msg = "") {
         const sel = Array.from(document.querySelectorAll('.server-checkbox:checked'));
-        if (sel.length === 0) { alert("Selecione os servidores."); return; }
+        if (sel.length === 0) { alert("ERRO: Selecione endpoints alvo."); return; }
         let p = null; if (req) { p = prompt(msg); if (!p || !p.trim()) return; }
-        if(!confirm(`Confirmar [${cmd}] para ${sel.length} servidor(es)?`)) return;
+        if(!confirm(`Deploy de script [${cmd}] para ${sel.length} host(s)?`)) return;
 
         const reg = sel.map(cb => ({ garagem_id: cb.value, comando: cmd, parametros: p, lido: false }));
         const { error } = await supabaseClient.from('comandos_remotos').insert(reg);
-        if (error) alert("Erro ao enviar."); else alert("Comando enviado!");
+        if (error) alert("Falha no deploy."); else alert("Script alocado na fila de execução.");
     }
 
     // ----------------------------------------------------
@@ -630,7 +614,7 @@
     }
 
     async function carregarDadosDoBanco(id) {
-      document.getElementById('last-update').innerText = "Baixando dados...";
+      document.getElementById('last-update').innerText = "Baixando pacotes...";
       let d = new Date(); d.setDate(d.getDate() - 15);
       const { data, error } = await supabaseClient.from('historico_comunicacoes').select('*').eq('garagem_id', id).gte('data_hora', d.toISOString()).order('data_hora', { ascending: false }).limit(5000);
       if (error) return;
@@ -642,15 +626,15 @@
           HISTORY[v].push({ d: r.data_hora.replace('T', ' ').substring(0,19), e: e });
           if (!METADATA[v]) METADATA[v] = { versao: r.versao, eod: r.eod };
       });
-      document.getElementById('last-update').innerText = "Tempo real"; renderDashboardIndividual();
+      document.getElementById('last-update').innerText = "Live"; renderDashboardIndividual();
     }
 
     function switchTab(id) {
         document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active'));
-        document.querySelectorAll('.seg-item').forEach(e => e.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(e => e.classList.remove('active'));
         document.getElementById(id).classList.add('active');
         const idx = id === 'tab-online' ? 0 : id === 'tab-critical' ? 1 : 2;
-        document.querySelectorAll('.seg-item')[idx].classList.add('active');
+        document.querySelectorAll('.tab')[idx].classList.add('active');
     }
 
     function renderDashboardIndividual() {
@@ -667,12 +651,12 @@
 
             if (isHj) {
                 if (last.e) {
-                    c.crit++; lists.crit.insertAdjacentHTML('beforeend', `<tr><td style="font-weight:600">${v}</td><td style="color:var(--apple-red)">${last.e}</td><td class="mono">${last.d.split(' ')[1]}</td><td>${m.versao||'-'}</td></tr>`);
+                    c.crit++; lists.crit.insertAdjacentHTML('beforeend', `<tr><td style="font-weight:600">${v}</td><td class="txt-red">${last.e}</td><td class="mono">${last.d.split(' ')[1]}</td><td>${m.versao||'-'}</td></tr>`);
                 } else {
-                    c.on++; lists.on.insertAdjacentHTML('beforeend', `<div class="v-card"><div class="v-id">${v}<span class="status-dot dot-green" style="margin:0"></span></div><div class="v-meta">🕒 ${last.d.split(' ')[1]}<br>v${m.versao||'?'} | EOD ${m.eod||'?'}</div></div>`);
+                    c.on++; lists.on.insertAdjacentHTML('beforeend', `<tr><td style="font-weight:600; color:var(--color-ok);">${v}</td><td class="mono">${last.d.split(' ')[1]}</td><td>v${m.versao||'?'} | EOD ${m.eod||'?'}</td></tr>`);
                 }
             } else {
-                c.off++; lists.off.insertAdjacentHTML('beforeend', `<tr><td style="font-weight:600">${v}</td><td><span class="tag">OFFLINE</span></td><td class="mono">${last.d}</td></tr>`);
+                c.off++; lists.off.insertAdjacentHTML('beforeend', `<tr><td style="font-weight:600">${v}</td><td class="txt-gray">TIMEOUT</td><td class="mono">${last.d}</td></tr>`);
             }
         });
 
@@ -682,14 +666,14 @@
     }
 
     function renderCharts(c) {
-        Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
-        Chart.defaults.color = '#8E8E93';
+        Chart.defaults.font.family = '"Segoe UI", Roboto, sans-serif';
+        Chart.defaults.color = '#8b98a9';
 
         if(chartStatus) chartStatus.destroy();
         chartStatus = new Chart(document.getElementById('statusChart').getContext('2d'), {
             type: 'doughnut',
-            data: { labels: ['Online', 'Erro', 'Offline'], datasets: [{ data: [c.on, c.crit, c.off], backgroundColor: ['#34C759', '#FF3B30', '#FF9500'], borderWidth: 0, hoverOffset: 4 }] },
-            options: { cutout: '75%', responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } } } }
+            data: { labels: ['OK', 'Erro', 'Inativo'], datasets: [{ data: [c.on, c.crit, c.off], backgroundColor: ['#00e676', '#ff3b30', '#ff9500'], borderWidth: 1, borderColor: '#1c2431' }] },
+            options: { cutout: '80%', responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8 } } } }
         });
 
         const lbl = []; const dOn = []; const dErr = [];
@@ -706,8 +690,8 @@
         if(chartTrend) chartTrend.destroy();
         chartTrend = new Chart(document.getElementById('trendChart').getContext('2d'), {
             type: 'line',
-            data: { labels: lbl, datasets: [ { label: 'Online', data: dOn, borderColor: '#34C759', backgroundColor: 'rgba(52, 199, 89, 0.1)', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 0 }, { label: 'Erros', data: dErr, borderColor: '#FF3B30', backgroundColor: 'transparent', tension: 0.4, borderWidth: 2, pointRadius: 0 } ] },
-            options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(142, 142, 147, 0.1)' }, beginAtZero: true }, x: { grid: { display: false } } } }
+            data: { labels: lbl, datasets: [ { label: 'Up', data: dOn, borderColor: '#00e5ff', backgroundColor: 'rgba(0, 229, 255, 0.1)', fill: true, tension: 0, borderWidth: 1, pointRadius: 2, pointBackgroundColor: '#00e5ff' }, { label: 'Down/Err', data: dErr, borderColor: '#ff3b30', backgroundColor: 'transparent', tension: 0, borderWidth: 1, borderDash: [5, 5], pointRadius: 0 } ] },
+            options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#283344' }, beginAtZero: true }, x: { grid: { color: '#283344' } } } }
         });
     }
 
