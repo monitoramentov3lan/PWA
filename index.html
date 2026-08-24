@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>NOC Dashboard - Garagens</title>
+  <title>NOC Dashboard</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     /* =========================================================
-       TEMA NOC / ZYLKER STYLE (DARK THEME)
+       TEMA NOC / ZYLKER STYLE (DARK THEME - APP OPTIMIZED)
        ========================================================= */
     :root {
       --bg-color: #141a24;
@@ -24,7 +24,7 @@
       --color-warn: #ff9500; /* Laranja */
       --color-chart: #00e5ff; /* Ciano Neon */
       
-      --radius: 4px; /* Bordas levemente quadradas, estilo técnico */
+      --radius: 6px; 
     }
 
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -36,6 +36,7 @@
         font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
         min-height: 100vh;
         font-size: 14px;
+        padding-bottom: 40px; /* Margem pro fim da tela no app */
     }
 
     .wrap { max-width: 1400px; margin: 0 auto; padding: 0 16px; }
@@ -45,10 +46,10 @@
     .login-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
     .login-card { background: var(--card-bg); width: 100%; max-width: 380px; padding: 40px 30px; border-radius: var(--radius); border: 1px solid var(--card-border); text-align: center; }
     
-    input { width: 100%; padding: 12px 14px; margin-top: 12px; border-radius: var(--radius); border: 1px solid var(--card-border); background: var(--bg-color); color: var(--text-main); font-size: 14px; outline: none; }
+    input { width: 100%; padding: 14px; margin-top: 12px; border-radius: var(--radius); border: 1px solid var(--card-border); background: var(--bg-color); color: var(--text-main); font-size: 14px; outline: none; }
     input:focus { border-color: var(--color-chart); }
     
-    .btn-primary { width: 100%; padding: 12px; margin-top: 24px; border-radius: var(--radius); background: var(--color-chart); color: #000; border: none; font-size: 14px; font-weight: 700; cursor: pointer; text-transform: uppercase; }
+    .btn-primary { width: 100%; padding: 14px; margin-top: 24px; border-radius: var(--radius); background: var(--color-chart); color: #000; border: none; font-size: 14px; font-weight: 700; cursor: pointer; text-transform: uppercase; }
     .btn-primary:active { opacity: 0.8; }
     
     .btn-text { background: transparent; color: var(--text-muted); border: none; padding: 10px; font-size: 13px; cursor: pointer; margin-top: 10px; }
@@ -57,20 +58,37 @@
     .aviso { padding: 10px; margin-top: 15px; font-size: 13px; font-weight: 500; border-radius: 4px; }
 
     /* ---------- HEADER (TOPBAR NOC) ---------- */
-    .topbar { background: var(--bg-color); border-bottom: 1px solid var(--card-border); padding: 12px 16px; margin-bottom: 20px; margin-left: -16px; margin-right: -16px; display: flex; justify-content: space-between; align-items: center; }
-    .brand h1 { font-size: 20px; font-weight: 400; margin: 0; display: flex; align-items: center; gap: 10px; color: #fff; }
-    .role-badge { font-size: 10px; background: var(--card-border); padding: 3px 6px; border-radius: 4px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; }
-    .last-update { font-size: 12px; color: var(--text-muted); margin-left: 10px; }
+    .topbar { 
+        background: var(--card-bg); border-bottom: 1px solid var(--card-border); 
+        padding: 12px 16px; margin-bottom: 16px; 
+        margin-left: -16px; margin-right: -16px; 
+        display: flex; justify-content: space-between; align-items: center; 
+        position: sticky; top: 0; z-index: 50; 
+    }
     
-    .header-actions { display: flex; align-items: center; gap: 15px; }
-    .btn-icon { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px; position: relative; padding: 0; }
+    .brand { display: flex; flex-direction: column; gap: 4px; }
+    .brand h1 { font-size: 18px; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 8px; color: #fff; white-space: nowrap; }
+    .role-badge { font-size: 10px; background: var(--card-border); padding: 3px 6px; border-radius: 4px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; }
+    .last-update { font-size: 11px; color: var(--color-chart); font-family: monospace; }
+    
+    .header-actions { display: flex; align-items: center; gap: 12px; }
+    .btn-icon { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 20px; position: relative; padding: 0; }
     .btn-icon:hover { color: var(--text-main); }
     .bell-badge { position: absolute; top: -5px; right: -5px; background: var(--color-err); color: white; font-size: 10px; font-weight: bold; min-width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
     .btn-logout { background: transparent; border: 1px solid var(--card-border); color: var(--text-muted); padding: 6px 12px; border-radius: var(--radius); font-size: 12px; cursor: pointer; transition: 0.2s; }
     .btn-logout:hover { border-color: var(--color-err); color: var(--color-err); }
 
-    /* ---------- FAIXA DE STATUS (STATUS STRIP INSPIRADA NA IMAGEM) ---------- */
-    .status-strip-container { background: var(--card-bg); border: 1px solid var(--card-border); padding: 12px; margin-bottom: 20px; border-radius: var(--radius); }
+    /* ---------- ABAS DO APP ---------- */
+    .tabs { display: flex; gap: 2px; margin-bottom: 16px; border-bottom: 1px solid var(--card-border); overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .tab { padding: 10px 16px; font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; }
+    .tab.active { color: var(--color-chart); border-bottom-color: var(--color-chart); background: rgba(0, 229, 255, 0.05); }
+    
+    .admin-view, .garage-view { display: none; }
+    .admin-view.active, .garage-view.active { display: block; animation: fadeIn 0.3s; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ---------- FAIXA DE STATUS ---------- */
+    .status-strip-container { background: var(--card-bg); border: 1px solid var(--card-border); padding: 12px; margin-bottom: 16px; border-radius: var(--radius); }
     .status-strip-title { font-size: 12px; color: var(--text-main); margin-bottom: 10px; font-weight: 600; }
     .status-blocks { display: flex; flex-wrap: wrap; gap: 6px; }
     .status-block { padding: 4px 8px; font-size: 11px; font-weight: 700; color: #000; border-radius: 2px; cursor: pointer; user-select: none; }
@@ -80,35 +98,34 @@
     .status-block.bg-gray { background-color: var(--card-border); color: var(--text-muted); }
 
     /* ---------- CARDS (KPIs) ---------- */
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
     .kpi-card { background: var(--card-bg); border: 1px solid var(--card-border); padding: 16px; border-radius: var(--radius); text-align: center; }
-    .kpi-title { font-size: 12px; color: var(--text-main); margin-bottom: 15px; }
-    .kpi-value { font-size: 32px; font-weight: 400; margin: 0; color: #fff; display: flex; align-items: baseline; justify-content: center; line-height: 1; }
+    .kpi-title { font-size: 12px; color: var(--text-main); margin-bottom: 10px; }
+    .kpi-value { font-size: 28px; font-weight: 400; margin: 0; color: #fff; display: flex; align-items: baseline; justify-content: center; line-height: 1; }
     .kpi-unit { font-size: 12px; color: var(--text-muted); margin-left: 4px; }
-    .kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 15px; }
+    .kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 10px; }
 
     /* ---------- CONTROLES E COMANDOS ---------- */
-    .panel-box { background: var(--card-bg); border: 1px solid var(--card-border); padding: 16px; border-radius: var(--radius); margin-bottom: 20px; }
-    .panel-title { font-size: 14px; color: var(--text-main); margin: 0 0 15px 0; font-weight: 600; }
+    .panel-box { background: var(--card-bg); border: 1px solid var(--card-border); padding: 16px; border-radius: var(--radius); margin-bottom: 16px; }
+    .panel-title { font-size: 14px; color: var(--text-main); margin: 0 0 15px 0; font-weight: 600; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;}
     
     .filters-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .filters-row input { margin-top: 0; flex: 1; min-width: 150px; background: var(--bg-color); }
-    .btn-action { background: var(--card-border); color: var(--text-main); border: none; padding: 10px 16px; border-radius: var(--radius); font-size: 13px; cursor: pointer; transition: 0.2s; }
-    .btn-action:hover { background: var(--color-chart); color: #000; }
+    .btn-action { background: var(--card-border); color: var(--text-main); border: none; padding: 10px 16px; border-radius: var(--radius); font-size: 13px; cursor: pointer; font-weight: 600; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+    .btn-action:active { background: var(--color-chart); color: #000; }
 
-    .cmd-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 15px; }
-    .btn-cmd { background: var(--bg-color); border: 1px solid var(--card-border); color: var(--text-main); border-radius: var(--radius); padding: 10px; font-size: 12px; cursor: pointer; text-align: left; transition: 0.2s; }
-    .btn-cmd:hover { border-color: var(--color-chart); color: var(--color-chart); }
+    .cmd-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 15px; }
+    .btn-cmd { background: var(--bg-color); border: 1px solid var(--card-border); color: var(--text-main); border-radius: var(--radius); padding: 12px; font-size: 12px; cursor: pointer; text-align: left; min-height: 44px; }
+    .btn-cmd:active { border-color: var(--color-chart); color: var(--color-chart); }
     .btn-cmd.danger { border-color: rgba(255, 59, 48, 0.3); color: var(--color-err); }
-    .btn-cmd.danger:hover { background: var(--color-err); color: #fff; border-color: var(--color-err); }
+    .btn-cmd.danger:active { background: var(--color-err); color: #fff; border-color: var(--color-err); }
 
     /* ---------- TABELAS ---------- */
-    .table-container { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; }
-    th { font-size: 11px; text-transform: uppercase; color: var(--text-muted); text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--card-border); font-weight: 600; }
+    .table-container { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); overflow-x: auto; -webkit-overflow-scrolling: touch;}
+    table { width: 100%; border-collapse: collapse; min-width: 500px; }
+    th { font-size: 11px; text-transform: uppercase; color: var(--text-muted); text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--card-border); font-weight: 600; background: var(--bg-color); }
     td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid var(--card-border); color: var(--text-main); }
     tr:last-child td { border-bottom: none; }
-    tr:hover td { background: rgba(255,255,255,0.02); }
     
     .txt-green { color: var(--color-ok); font-weight: bold; }
     .txt-red { color: var(--color-err); font-weight: bold; }
@@ -116,32 +133,33 @@
     .mono { font-family: monospace; font-size: 14px; }
 
     /* ---------- CHARTS ---------- */
-    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 15px; margin-bottom: 20px; }
-    .chart-box { background: var(--card-bg); padding: 16px; border-radius: var(--radius); border: 1px solid var(--card-border); height: 280px; }
-
-    /* ---------- ABAS ---------- */
-    .tabs { display: flex; gap: 2px; margin-bottom: 15px; border-bottom: 1px solid var(--card-border); }
-    .tab { padding: 8px 16px; font-size: 13px; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; }
-    .tab.active { color: var(--color-chart); border-bottom-color: var(--color-chart); font-weight: bold; }
-    .view-section { display: none; }
-    .view-section.active { display: block; animation: fadeIn 0.3s; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .chart-box { background: var(--card-bg); padding: 16px; border-radius: var(--radius); border: 1px solid var(--card-border); height: 260px; }
 
     /* ---------- MODAL DE ALERTAS ---------- */
     .alerts-panel { position: fixed; top: 60px; right: 16px; width: 320px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 9999; max-height: 400px; overflow-y: auto; display: none; }
     .alerts-panel.active { display: block; }
     .alerts-header { padding: 12px 16px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--card-bg); }
     .alert-item { padding: 12px 16px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; gap: 10px; font-size: 13px; background: var(--bg-color); }
-    .btn-dismiss { background: transparent; color: var(--text-muted); border: none; cursor: pointer; padding: 0; }
-    .btn-dismiss:hover { color: #fff; }
+    .btn-dismiss { background: transparent; color: var(--text-muted); border: none; cursor: pointer; padding: 0; font-size: 16px; }
 
-    /* ---------- RESPONSIVIDADE ---------- */
+    /* ---------- OTIMIZAÇÃO MOBILE (APP) ---------- */
     @media (max-width: 768px) {
-        .topbar { flex-direction: column; align-items: flex-start; gap: 10px; padding: 16px; }
-        .header-actions { position: absolute; right: 16px; top: 16px; }
-        .charts-grid { grid-template-columns: 1fr; }
+        /* Grade 2x2 para os KPIs no mobile */
+        .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+        .kpi-card { padding: 12px 10px; }
+        .kpi-value { font-size: 22px; }
+        .kpi-sub { font-size: 9px; line-height: 1.1; }
+        
         .filters-row { flex-direction: column; align-items: stretch; }
+        .filters-row input, .filters-row button { width: 100%; min-height: 44px;}
         .cmd-grid { grid-template-columns: 1fr; }
+        
+        /* Ajuste fino do Header para não amassar no mobile */
+        .brand h1 { font-size: 16px; }
+        .btn-logout { padding: 6px 10px; font-size: 11px; }
+        
+        .alerts-panel { right: 10px; left: 10px; width: auto; }
     }
   </style>
 </head>
@@ -150,8 +168,8 @@
   <!-- ================= TELA DE LOGIN ================= -->
   <div id="login-screen" class="login-container">
       <div class="login-card">
-        <h1 style="color: #fff; margin-bottom: 5px;">Zylker Network</h1>
-        <p style="color: var(--text-muted); margin-top: 0;">Acesso NOC Central</p>
+        <h1 style="color: #fff; margin-bottom: 5px;">Zylker NOC</h1>
+        <p style="color: var(--text-muted); margin-top: 0;">Acesso Central</p>
         
         <input type="email" id="email" placeholder="E-mail">
         <input type="password" id="password" placeholder="Senha" onkeyup="if(event.key === 'Enter') fazerLogin()">
@@ -190,7 +208,8 @@
     
     <div class="topbar">
         <div class="brand">
-            <h1>Zylker Network Dashboard <span class="role-badge" id="mestre-role-badge">ADMIN</span> <span class="last-update" id="master-last-update">Última atualização: --</span></h1>
+            <h1>Zylker NOC <span class="role-badge" id="mestre-role-badge">ADMIN</span></h1>
+            <span class="last-update" id="master-last-update">Buscando...</span>
         </div>
         <div class="header-actions">
             <button class="btn-icon" onclick="toggleAlerts()">🔔<div id="bell-badge-admin" class="bell-badge hidden">0</div></button>
@@ -198,95 +217,109 @@
         </div>
     </div>
 
-    <!-- FAIXA DE STATUS DOS MONITORES -->
-    <div class="status-strip-container">
-        <div class="status-strip-title">Status atual de todos os monitores (Garagens)</div>
-        <div class="status-blocks" id="status-blocks-container">
-            <!-- Blocos gerados via JS -->
-            <span style="color: var(--text-muted); font-size: 11px;">Carregando status...</span>
+    <!-- ABAS DO APP ADMIN -->
+    <div class="tabs" id="admin-tabs">
+        <div class="tab active" onclick="switchAdminTab('admin-geral', this)">Visão Geral</div>
+        <div class="tab" onclick="switchAdminTab('admin-lista', this)">Tabela de Garagens</div>
+        <div class="tab" id="tab-admin-comandos" onclick="switchAdminTab('admin-comandos', this)" style="display: none;">Terminal Remoto</div>
+    </div>
+
+    <!-- ABA 1: VISÃO GERAL (KPIs e Status Strip) -->
+    <div id="admin-geral" class="admin-view active">
+        <!-- FAIXA DE STATUS -->
+        <div class="status-strip-container">
+            <div class="status-strip-title">Status atual dos Monitores</div>
+            <div class="status-blocks" id="status-blocks-container">
+                <span style="color: var(--text-muted); font-size: 11px;">Carregando...</span>
+            </div>
+        </div>
+
+        <!-- KPIs 2x2 no Mobile -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-title">Veículos Online</div>
+                <div class="kpi-value"><span id="kpi-online-total">0</span><span class="kpi-unit">veíc.</span></div>
+                <div class="kpi-sub">Comunicação nas últimas 24h</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Veículos Offline</div>
+                <div class="kpi-value"><span id="kpi-offline-total">0</span><span class="kpi-unit">veíc.</span></div>
+                <div class="kpi-sub">Sem comunicação recente</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Tráfego de TGs</div>
+                <div class="kpi-value"><span id="kpi-tgs-total">0</span><span class="kpi-unit">arq.</span></div>
+                <div class="kpi-sub">Recebidos na data filtrada</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Unidades Ativas</div>
+                <div class="kpi-value"><span id="kpi-garagens-total">0</span><span class="kpi-unit">unid.</span></div>
+                <div class="kpi-sub">Garagens operantes</div>
+            </div>
         </div>
     </div>
 
-    <!-- KPIs -->
-    <div class="kpi-grid">
-        <div class="kpi-card">
-            <div class="kpi-title">Veículos Online</div>
-            <div class="kpi-value"><span id="kpi-online-total">0</span><span class="kpi-unit">veículos</span></div>
-            <div class="kpi-sub">Comunicaram nas últimas 24h</div>
+    <!-- ABA 2: LISTA / TABELA -->
+    <div id="admin-lista" class="admin-view">
+        <div class="panel-box filters-row">
+            <input type="date" id="date-selector-mestre">
+            <input type="text" id="filtro-garagem" placeholder="Filtrar nome...">
+            <button class="btn-action" id="btn-atualizar-mestre" onclick="atualizarTGsMestre()">Atualizar TGs</button>
         </div>
-        <div class="kpi-card">
-            <div class="kpi-title">Veículos Offline</div>
-            <div class="kpi-value"><span id="kpi-offline-total">0</span><span class="kpi-unit">veículos</span></div>
-            <div class="kpi-sub">Sem comunicação hoje</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-title">Tráfego de TGs</div>
-            <div class="kpi-value"><span id="kpi-tgs-total">0</span><span class="kpi-unit">arquivos</span></div>
-            <div class="kpi-sub">Recebidos na data filtrada</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-title">Monitoramento Ativo</div>
-            <div class="kpi-value"><span id="kpi-garagens-total">0</span><span class="kpi-unit">unids.</span></div>
-            <div class="kpi-sub">Garagens ativas reportando</div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Monitor</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">On</th>
+                        <th style="text-align: right;">Off</th>
+                        <th style="text-align: center;">TGs (<span id="tg-header-date"></span>)</th>
+                        <th style="text-align: right;">Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-garages-list">
+                    <tr><td colspan="6" style="text-align:center;">Carregando dados...</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
-    <!-- FILTROS -->
-    <div class="panel-box filters-row">
-        <input type="date" id="date-selector-mestre">
-        <input type="text" id="filtro-garagem" placeholder="Filtrar por nome do monitor...">
-        <button class="btn-action" id="btn-atualizar-mestre" onclick="atualizarTGsMestre()">Atualizar Dashboard</button>
-    </div>
+    <!-- ABA 3: COMANDOS REMOTOS -->
+    <div id="admin-comandos" class="admin-view">
+        <div class="panel-box">
+            <h2 class="panel-title">Deploy de Scripts Remotos</h2>
+            <div style="margin-bottom: 15px; font-size: 12px; color: var(--color-chart);">
+                <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" onclick="toggleTodasGaragens()"> Marcar todos os Endpoints</label>
+            </div>
+            <div id="cmd-server-list" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; max-height: 120px; overflow-y: auto;"></div>
 
-    <!-- PAINEL DE COMANDOS REMOTOS -->
-    <div class="panel-box" id="panel-comandos-remotos" style="display: none;">
-        <h2 class="panel-title">Execução de Scripts Remotos</h2>
-        <div style="margin-bottom: 15px; font-size: 12px; color: var(--text-muted);">
-            <label><input type="checkbox" onclick="toggleTodasGaragens()"> Selecionar todos os endpoints</label>
-        </div>
-        <div id="cmd-server-list" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; max-height: 80px; overflow-y: auto;"></div>
-
-        <div class="cmd-grid">
-            <button class="btn-cmd" onclick="dispararComando('reprocessar', true, 'Data (DD/MM/YYYY):')">> Reprocessar Data</button>
-            <button class="btn-cmd" onclick="dispararComando('reiniciar_biometria')">> Reiniciar Biometria</button>
-            <button class="btn-cmd" onclick="dispararComando('criar_tsk', true, 'Prefixos (vírgula):')">> Gerar TSK</button>
-            <button class="btn-cmd" onclick="dispararComando('monitorar_tsk')">> Monitorar TSK Agora</button>
-            <button class="btn-cmd" onclick="dispararComando('relatorio_tsk')">> Relatório TSK (3 dias)</button>
-            <button class="btn-cmd" onclick="dispararComando('gerar_relatorio')">> Gerar Relatório de Com.</button>
-            <button class="btn-cmd" onclick="dispararComando('restart')">> Restart Serviços (V3LAN)</button>
-            <button class="btn-cmd danger" onclick="dispararComando('reiniciar_pc')">! Reiniciar Endpoint (PC)</button>
+            <div class="cmd-grid">
+                <button class="btn-cmd" onclick="dispararComando('reprocessar', true, 'Data (DD/MM/YYYY):')">> Reprocessar Data</button>
+                <button class="btn-cmd" onclick="dispararComando('reiniciar_biometria')">> Reiniciar Biometria</button>
+                <button class="btn-cmd" onclick="dispararComando('criar_tsk', true, 'Prefixos (vírgula):')">> Gerar TSK Lote</button>
+                <button class="btn-cmd" onclick="dispararComando('monitorar_tsk')">> Forçar Scan TSK</button>
+                <button class="btn-cmd" onclick="dispararComando('relatorio_tsk')">> Enviar Log TSK</button>
+                <button class="btn-cmd" onclick="dispararComando('gerar_relatorio')">> Forçar Relatório TGs</button>
+                <button class="btn-cmd" onclick="dispararComando('restart')">> Restart Serviços (Python)</button>
+                <button class="btn-cmd danger" onclick="dispararComando('reiniciar_pc')">! Reboot Server (Win)</button>
+            </div>
         </div>
     </div>
 
-    <!-- TABELA -->
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Monitor</th>
-                    <th>Status</th>
-                    <th style="text-align: right;">Online</th>
-                    <th style="text-align: right;">Offline</th>
-                    <th style="text-align: center;">Pacotes (TGs)</th>
-                    <th style="text-align: right;">Ação</th>
-                </tr>
-            </thead>
-            <tbody id="admin-garages-list">
-                <tr><td colspan="6" style="text-align:center;">Inicializando...</td></tr>
-            </tbody>
-        </table>
-    </div>
   </div>
 
   <!-- ================= TELA DO DASHBOARD INDIVIDUAL ================= -->
   <div id="app-screen" class="hidden wrap">
     
     <div class="topbar">
-        <div class="brand">
-            <h1><button style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; padding:0 10px 0 0;" onclick="voltarParaAdmin()">◀</button> 
-                <span id="garage-name-display">Monitor</span>
-            </h1>
-            <span class="last-update" id="last-update">Sincronizando...</span>
+        <div class="brand" style="flex-direction: row; align-items: center; gap: 10px;">
+            <button style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; padding:0; font-size: 20px;" onclick="voltarParaAdmin()">◀</button> 
+            <div>
+                <h1 id="garage-name-display">Monitor</h1>
+                <span class="last-update" id="indiv-last-update">Sincronizando...</span>
+            </div>
         </div>
         <div class="header-actions">
             <button class="btn-icon" onclick="toggleAlerts()">🔔<div id="bell-badge-garage" class="bell-badge hidden">0</div></button>
@@ -295,48 +328,48 @@
     </div>
 
     <div class="kpi-grid">
-        <div class="kpi-card"><div class="kpi-title">Tráfego OK</div><div class="kpi-value"><span id="kpi-online">0</span></div><div class="kpi-sub">Nodes conectados</div></div>
-        <div class="kpi-card"><div class="kpi-title">Falta de Resposta</div><div class="kpi-value"><span id="kpi-offline">0</span></div><div class="kpi-sub">Nodes inativos</div></div>
-        <div class="kpi-card"><div class="kpi-title">Avisos / Erros</div><div class="kpi-value" style="color: var(--color-err);"><span id="kpi-critical">0</span></div><div class="kpi-sub">Logs de falha</div></div>
-        <div class="kpi-card"><div class="kpi-title">Nodes Monitorados</div><div class="kpi-value"><span id="kpi-total">0</span></div><div class="kpi-sub">Total de veículos</div></div>
+        <div class="kpi-card"><div class="kpi-title">Tráfego OK</div><div class="kpi-value"><span id="kpi-online">0</span></div></div>
+        <div class="kpi-card"><div class="kpi-title">Sem Resposta</div><div class="kpi-value"><span id="kpi-offline">0</span></div></div>
+        <div class="kpi-card"><div class="kpi-title">Avisos / Erros</div><div class="kpi-value" style="color: var(--color-err);"><span id="kpi-critical">0</span></div></div>
+        <div class="kpi-card"><div class="kpi-title">Total Nodes</div><div class="kpi-value"><span id="kpi-total">0</span></div></div>
     </div>
 
     <div class="charts-grid">
         <div class="chart-box">
-            <div class="kpi-title">Tendência de Comunicação (15 Dias)</div>
-            <div style="height: 220px;"><canvas id="trendChart"></canvas></div>
+            <div class="kpi-title">Histórico de Pings (15 Dias)</div>
+            <div style="height: 200px;"><canvas id="trendChart"></canvas></div>
         </div>
         <div class="chart-box">
-            <div class="kpi-title">Uso de Tráfego Atual (Status)</div>
-            <div style="height: 220px; position: relative;"><canvas id="statusChart"></canvas></div>
+            <div class="kpi-title">Status da Rede</div>
+            <div style="height: 200px; position: relative;"><canvas id="statusChart"></canvas></div>
         </div>
     </div>
 
     <div class="tabs">
-        <div class="tab active" onclick="switchTab('tab-online')">Ativos</div>
-        <div class="tab" onclick="switchTab('tab-critical')">Logs de Erro</div>
-        <div class="tab" onclick="switchTab('tab-offline')">Sem Resposta</div>
+        <div class="tab active" onclick="switchGarageTab('tab-online', this)">Conectados</div>
+        <div class="tab" onclick="switchGarageTab('tab-critical', this)">Logs Erro</div>
+        <div class="tab" onclick="switchGarageTab('tab-offline', this)">Down</div>
     </div>
 
-    <div id="tab-online" class="view-section active">
+    <div id="tab-online" class="garage-view active">
         <div class="table-container">
             <table>
-                <thead><tr><th>Node (Prefixo)</th><th>Último Ping</th><th>Versão | EOD</th></tr></thead>
+                <thead><tr><th>Node (Prefixo)</th><th>Último Ping</th><th>Firmware | EOD</th></tr></thead>
                 <tbody id="list-online"></tbody>
             </table>
         </div>
     </div>
 
-    <div id="tab-critical" class="view-section">
+    <div id="tab-critical" class="garage-view">
         <div class="table-container">
             <table>
-                <thead><tr><th>Node</th><th>Exception/Log</th><th>Timestamp</th><th>Versão</th></tr></thead>
+                <thead><tr><th>Node</th><th>Exception/Log</th><th>Time</th><th>Firmware</th></tr></thead>
                 <tbody id="list-critical"></tbody>
             </table>
         </div>
     </div>
 
-    <div id="tab-offline" class="view-section">
+    <div id="tab-offline" class="garage-view">
         <div class="table-container">
             <table>
                 <thead><tr><th>Node</th><th>Status</th><th>Último Visto</th></tr></thead>
@@ -354,7 +387,6 @@
     // ⚠️ COLOQUE SUAS CHAVES AQUI
     const SUPABASE_URL = 'https://oiszcvmxteebrbtgcily.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9pc3pjdm14dGVlYnJidGdjaWx5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwMzcyMDYsImV4cCI6MjEwMTYxMzIwNn0.Ca79oZlYfky0j4HRW9KW6WDTDOqwGS_lxQcRSxYdnxY';
-    
     
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const statusMsg = document.getElementById('status-msg');
@@ -442,6 +474,23 @@
     }
 
     // ----------------------------------------------------
+    // NAVEGAÇÃO ABAS
+    // ----------------------------------------------------
+    function switchAdminTab(id, elem) {
+        document.querySelectorAll('.admin-view').forEach(e => e.classList.remove('active'));
+        document.querySelectorAll('#admin-tabs .tab').forEach(e => e.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        elem.classList.add('active');
+    }
+
+    function switchGarageTab(id, elem) {
+        document.querySelectorAll('.garage-view').forEach(e => e.classList.remove('active'));
+        document.querySelectorAll('#app-screen .tab').forEach(e => e.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        elem.classList.add('active');
+    }
+
+    // ----------------------------------------------------
     // ALERTAS
     // ----------------------------------------------------
     function toggleAlerts() { document.getElementById('alerts-panel').classList.toggle('active'); }
@@ -501,12 +550,14 @@
     // ----------------------------------------------------
     function updateMasterTime() {
         const now = new Date();
-        document.getElementById('master-last-update').innerText = `Atualizado: ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+        document.getElementById('master-last-update').innerText = `Atualizado: ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
     }
 
     async function mostrarTelaMestreAdmin() {
         document.getElementById('admin-screen').classList.remove('hidden');
-        if (document.getElementById('panel-comandos-remotos')) { document.getElementById('panel-comandos-remotos').style.display = currentUserProfile.perfil === 'admin' ? 'block' : 'none'; }
+        if (currentUserProfile.perfil === 'admin') { 
+            document.getElementById('tab-admin-comandos').style.display = 'block'; 
+        }
 
         const hoje = new Date().toISOString().split('T')[0];
         if(!document.getElementById('date-selector-mestre').value) document.getElementById('date-selector-mestre').value = hoje;
@@ -533,7 +584,7 @@
         const { data: t } = await qtg; tgsMestre = t || [];
         
         updateMasterTime();
-        renderizarDadosMestre(); if(btn) btn.innerText = "Atualizar Dashboard";
+        renderizarDadosMestre(); if(btn) btn.innerText = "Atualizar TGs";
     }
 
     document.getElementById('filtro-garagem').addEventListener('input', renderizarDadosMestre);
@@ -556,22 +607,20 @@
 
             tot.on += on; tot.off += off; tot.tgs += tgC; if(on>0||off>0) tot.ativas++;
 
-            // Configura Cor do Bloco do Topo (Status Strip)
             let stClass = 'bg-gray';
             if(on > 0 && off === 0) stClass = 'bg-ok';
             else if(on > 0 && off > 0) stClass = 'bg-warn';
             else if(on === 0 && off > 0) stClass = 'bg-err';
             
-            htmlStrip += `<div class="status-block ${stClass}" title="${g.nome_garagem} - On:${on} Off:${off}" onclick="abrirDashboardGaragem('${g.id}', '${g.nome_garagem}')">${g.nome_garagem}</div>`;
+            htmlStrip += `<div class="status-block ${stClass}" onclick="abrirDashboardGaragem('${g.id}', '${g.nome_garagem}')">${g.nome_garagem}</div>`;
 
-            // Tabela
             htmlTable += `<tr>
                 <td style="font-weight:600;">${g.nome_garagem}</td>
                 <td class="${stClass === 'bg-ok' ? 'txt-green' : (stClass === 'bg-gray' ? 'txt-gray' : 'txt-red')}">${(on>0||off>0)?'Operante':'S/ Sinal'}</td>
                 <td class="mono" style="text-align: right; color:${on>0?'#fff':'var(--text-muted)'}">${on}</td>
                 <td class="mono" style="text-align: right; color:${off>0?'var(--color-err)':'var(--text-muted)'}">${off}</td>
                 <td class="mono" style="text-align: center; color:var(--color-chart);">${tgC}</td>
-                <td style="text-align: right;"><button class="btn-action" onclick="abrirDashboardGaragem('${g.id}', '${g.nome_garagem}')">Ver →</button></td>
+                <td style="text-align: right;"><button class="btn-action" style="min-height:auto; padding: 6px 12px; font-size:11px;" onclick="abrirDashboardGaragem('${g.id}', '${g.nome_garagem}')">Abrir</button></td>
             </tr>`;
         });
 
@@ -579,6 +628,9 @@
         document.getElementById('admin-garages-list').innerHTML = htmlTable || `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted)">Sem registros.</td></tr>`;
         document.getElementById('kpi-online-total').innerText = tot.on; document.getElementById('kpi-offline-total').innerText = tot.off;
         document.getElementById('kpi-tgs-total').innerText = tot.tgs; document.getElementById('kpi-garagens-total').innerText = `${tot.ativas}/${listaGaragens.length}`;
+        
+        const dt = document.getElementById('date-selector-mestre').value;
+        if(dt) { const [y, m, d] = dt.split('-'); document.getElementById('tg-header-date').innerText = `${d}/${m}`; }
     }
 
     let tM = false;
@@ -614,7 +666,7 @@
     }
 
     async function carregarDadosDoBanco(id) {
-      document.getElementById('last-update').innerText = "Baixando pacotes...";
+      document.getElementById('indiv-last-update').innerText = "Baixando pacotes...";
       let d = new Date(); d.setDate(d.getDate() - 15);
       const { data, error } = await supabaseClient.from('historico_comunicacoes').select('*').eq('garagem_id', id).gte('data_hora', d.toISOString()).order('data_hora', { ascending: false }).limit(5000);
       if (error) return;
@@ -626,15 +678,9 @@
           HISTORY[v].push({ d: r.data_hora.replace('T', ' ').substring(0,19), e: e });
           if (!METADATA[v]) METADATA[v] = { versao: r.versao, eod: r.eod };
       });
-      document.getElementById('last-update').innerText = "Live"; renderDashboardIndividual();
-    }
-
-    function switchTab(id) {
-        document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active'));
-        document.querySelectorAll('.tab').forEach(e => e.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        const idx = id === 'tab-online' ? 0 : id === 'tab-critical' ? 1 : 2;
-        document.querySelectorAll('.tab')[idx].classList.add('active');
+      const now = new Date();
+      document.getElementById('indiv-last-update').innerText = `Sync: ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+      renderDashboardIndividual();
     }
 
     function renderDashboardIndividual() {
