@@ -2,387 +2,364 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>NOC Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PWA Central - Garagens</title>
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+  <!-- Fontes Customizadas -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
   <style>
-    /* =========================================================
-       TEMA NOC / ZYLKER STYLE (DARK THEME - APP OPTIMIZED)
-       ========================================================= */
+    /* VARIÁVEIS DE TEMA */
     :root {
-      --bg-color: #141a24;
-      --card-bg: #1c2431;
-      --card-border: #283344;
-      --text-main: #e2e8f0;
-      --text-muted: #8b98a9;
-      
-      --color-ok: #00e676; /* Verde Neon */
-      --color-err: #ff3b30; /* Vermelho */
-      --color-warn: #ff9500; /* Laranja */
-      --color-chart: #00e5ff; /* Ciano Neon */
-      
-      --radius: 6px; 
+      --bg: #0a0f1c; --panel: #10182b; --panel-2: #141d34; --border: #22304d;
+      --text: #e7ecf7; --text-dim: #8a96b3; --text-faint: #566080;
+      --accent: #2bd9c9; --accent-dim: rgba(43,217,201,0.14);
+      --online: #34d399; --online-dim: rgba(52,211,153,0.14);
+      --offline: #fb6b6b; --offline-dim: rgba(251,107,107,0.14);
+      --warning: #f0ac3f;
+      --radius: 12px; --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
-
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     
-    body { 
-        margin: 0; padding: 0; 
-        background-color: var(--bg-color); 
-        color: var(--text-main); 
-        font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-        min-height: 100vh;
-        font-size: 14px;
-        padding-bottom: 40px; /* Margem pro fim da tela no app */
-    }
-
-    .wrap { max-width: 1400px; margin: 0 auto; padding: 0 16px; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background-color: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; }
+    body { background: radial-gradient(ellipse 900px 500px at 15% -10%, rgba(43,217,201,0.08), transparent 60%), radial-gradient(ellipse 700px 500px at 100% 0%, rgba(240,172,63,0.05), transparent 55%), var(--bg); padding: 28px 24px 60px; }
+    .wrap { max-width: 1320px; margin: 0 auto; }
     .hidden { display: none !important; }
 
-    /* ---------- TELA DE LOGIN ---------- */
-    .login-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
-    .login-card { background: var(--card-bg); width: 100%; max-width: 380px; padding: 40px 30px; border-radius: var(--radius); border: 1px solid var(--card-border); text-align: center; }
-    
-    input { width: 100%; padding: 14px; margin-top: 12px; border-radius: var(--radius); border: 1px solid var(--card-border); background: var(--bg-color); color: var(--text-main); font-size: 14px; outline: none; }
-    input:focus { border-color: var(--color-chart); }
-    
-    .btn-primary { width: 100%; padding: 14px; margin-top: 24px; border-radius: var(--radius); background: var(--color-chart); color: #000; border: none; font-size: 14px; font-weight: 700; cursor: pointer; text-transform: uppercase; }
-    .btn-primary:active { opacity: 0.8; }
-    
-    .btn-text { background: transparent; color: var(--text-muted); border: none; padding: 10px; font-size: 13px; cursor: pointer; margin-top: 10px; }
-    .btn-text:hover { color: var(--text-main); }
-    
-    .aviso { padding: 10px; margin-top: 15px; font-size: 13px; font-weight: 500; border-radius: 4px; }
+    /* ---------- TELA DE LOGIN / RECUPERAÇÃO ---------- */
+    .login-card { background: var(--panel); max-width: 400px; margin: 10vh auto; padding: 40px 30px; border-radius: var(--radius); border: 1px solid var(--border); text-align: center; }
+    .login-card input { width: 100%; padding: 12px; margin-top: 15px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); outline: none; }
+    .btn-primary { padding: 10px 20px; border-radius: 8px; background: var(--accent); color: #04211d; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; }
+    .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+    .btn-ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--border); padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; width: 100%; margin-top: 10px; }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .aviso { padding: 10px; margin-top: 15px; font-size: 0.85rem; font-weight: 600; border-radius: 8px; }
 
-    /* ---------- HEADER (TOPBAR NOC) ---------- */
-    .topbar { 
-        background: var(--card-bg); border-bottom: 1px solid var(--card-border); 
-        padding: 12px 16px; margin-bottom: 16px; 
-        margin-left: -16px; margin-right: -16px; 
-        display: flex; justify-content: space-between; align-items: center; 
-        position: sticky; top: 0; z-index: 50; 
-    }
+    /* ---------- HEADER COMUM ---------- */
+    .topbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 26px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(145deg, var(--accent), #178f83); display: flex; align-items: center; justify-content: center; }
+    h1 { font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 10px; }
+    .role-badge { font-size: 0.65rem; background: var(--panel-2); border: 1px solid var(--border); padding: 4px 10px; border-radius: 20px; color: var(--text-dim); }
+    .btn-logout { background: var(--offline); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+    .btn-voltar { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; margin-right: 10px; }
+    .header-actions { display: flex; align-items: center; }
+
+    /* ---------- SINO E ALERTAS ---------- */
+    .btn-bell { position: relative; background: transparent; border: none; font-size: 1.4rem; cursor: pointer; color: var(--text); padding: 5px; margin-right: 10px; }
+    .bell-badge { position: absolute; top: -2px; right: -2px; background: var(--offline); color: white; font-size: 0.65rem; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Inter', sans-serif; }
     
-    .brand { display: flex; flex-direction: column; gap: 4px; }
-    .brand h1 { font-size: 18px; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 8px; color: #fff; white-space: nowrap; }
-    .role-badge { font-size: 10px; background: var(--card-border); padding: 3px 6px; border-radius: 4px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; }
-    .last-update { font-size: 11px; color: var(--color-chart); font-family: monospace; }
-    
-    .header-actions { display: flex; align-items: center; gap: 12px; }
-    .btn-icon { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 20px; position: relative; padding: 0; }
-    .btn-icon:hover { color: var(--text-main); }
-    .bell-badge { position: absolute; top: -5px; right: -5px; background: var(--color-err); color: white; font-size: 10px; font-weight: bold; min-width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-    .btn-logout { background: transparent; border: 1px solid var(--card-border); color: var(--text-muted); padding: 6px 12px; border-radius: var(--radius); font-size: 12px; cursor: pointer; transition: 0.2s; }
-    .btn-logout:hover { border-color: var(--color-err); color: var(--color-err); }
+    .alerts-panel { position: fixed; top: 80px; right: 24px; width: 360px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 10px 40px rgba(0,0,0,0.8); z-index: 9999; max-height: 450px; overflow-y: auto; display: none; }
+    .alerts-panel.active { display: block; animation: fadeIn 0.2s; }
+    .alert-item { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; display: flex; justify-content: space-between; gap: 10px; background: var(--panel-2); margin: 5px 10px; border-radius: 8px; }
+    .alert-msg { flex: 1; line-height: 1.4; color: var(--text); }
+    .alert-time { font-size: 0.7rem; color: var(--text-faint); margin-top: 5px; display: block; }
+    .btn-dismiss { background: transparent; border: none; color: var(--text-dim); cursor: pointer; font-size: 1.1rem; padding: 0; height: fit-content; }
+    .btn-dismiss:hover { color: var(--accent); }
 
-    /* ---------- ABAS DO APP ---------- */
-    .tabs { display: flex; gap: 2px; margin-bottom: 16px; border-bottom: 1px solid var(--card-border); overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .tab { padding: 10px 16px; font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; }
-    .tab.active { color: var(--color-chart); border-bottom-color: var(--color-chart); background: rgba(0, 229, 255, 0.05); }
-    
-    .admin-view, .garage-view { display: none; }
-    .admin-view.active, .garage-view.active { display: block; animation: fadeIn 0.3s; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    /* ---------- KPIS ---------- */
+    .kpi-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    .kpi { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; position: relative; }
+    .kpi::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--kpi-color, var(--accent)); }
+    .kpi-label { font-size: 0.7rem; text-transform: uppercase; color: var(--text-dim); font-weight: 600; }
+    .kpi-value { font-family: 'IBM Plex Mono', monospace; font-size: 1.85rem; font-weight: 600; margin-top: 6px; color: var(--kpi-color, var(--text)); }
 
-    /* ---------- FAIXA DE STATUS ---------- */
-    .status-strip-container { background: var(--card-bg); border: 1px solid var(--card-border); padding: 12px; margin-bottom: 16px; border-radius: var(--radius); }
-    .status-strip-title { font-size: 12px; color: var(--text-main); margin-bottom: 10px; font-weight: 600; }
-    .status-blocks { display: flex; flex-wrap: wrap; gap: 6px; }
-    .status-block { padding: 4px 8px; font-size: 11px; font-weight: 700; color: #000; border-radius: 2px; cursor: pointer; user-select: none; }
-    .status-block.bg-ok { background-color: var(--color-ok); }
-    .status-block.bg-err { background-color: var(--color-err); color: #fff; }
-    .status-block.bg-warn { background-color: var(--color-warn); }
-    .status-block.bg-gray { background-color: var(--card-border); color: var(--text-muted); }
+    /* ---------- CONTROLES DE FILTRO E DATA (MESTRE) ---------- */
+    .controls { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .control-group { display: flex; align-items: center; gap: 8px; }
+    .control-label { font-size: 0.78rem; color: var(--text-dim); font-weight: 500; white-space: nowrap; }
+    input[type="date"], input[type="text"] { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 8px 12px; font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; outline: none; transition: border-color .15s; }
+    input[type="date"]:focus, input[type="text"]:focus { border-color: var(--accent); }
+    ::-webkit-calendar-picker-indicator { filter: invert(0.8); cursor: pointer; }
+    .info-note { width: 100%; font-size: 0.76rem; color: var(--text-faint); display: flex; align-items: center; gap: 6px; padding-top: 10px; margin-top: 2px; border-top: 1px dashed var(--border); }
 
-    /* ---------- CARDS (KPIs) ---------- */
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
-    .kpi-card { background: var(--card-bg); border: 1px solid var(--card-border); padding: 16px; border-radius: var(--radius); text-align: center; }
-    .kpi-title { font-size: 12px; color: var(--text-main); margin-bottom: 10px; }
-    .kpi-value { font-size: 28px; font-weight: 400; margin: 0; color: #fff; display: flex; align-items: baseline; justify-content: center; line-height: 1; }
-    .kpi-unit { font-size: 12px; color: var(--text-muted); margin-left: 4px; }
-    .kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 10px; }
-
-    /* ---------- CONTROLES E COMANDOS ---------- */
-    .panel-box { background: var(--card-bg); border: 1px solid var(--card-border); padding: 16px; border-radius: var(--radius); margin-bottom: 16px; }
-    .panel-title { font-size: 14px; color: var(--text-main); margin: 0 0 15px 0; font-weight: 600; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;}
-    
-    .filters-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-    .filters-row input { margin-top: 0; flex: 1; min-width: 150px; background: var(--bg-color); }
-    .btn-action { background: var(--card-border); color: var(--text-main); border: none; padding: 10px 16px; border-radius: var(--radius); font-size: 13px; cursor: pointer; font-weight: 600; min-height: 44px; display: flex; align-items: center; justify-content: center; }
-    .btn-action:active { background: var(--color-chart); color: #000; }
-
-    .cmd-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 15px; }
-    .btn-cmd { background: var(--bg-color); border: 1px solid var(--card-border); color: var(--text-main); border-radius: var(--radius); padding: 12px; font-size: 12px; cursor: pointer; text-align: left; min-height: 44px; }
-    .btn-cmd:active { border-color: var(--color-chart); color: var(--color-chart); }
-    .btn-cmd.danger { border-color: rgba(255, 59, 48, 0.3); color: var(--color-err); }
-    .btn-cmd.danger:active { background: var(--color-err); color: #fff; border-color: var(--color-err); }
+    /* ---------- COMANDOS REMOTOS ---------- */
+    .controls-panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; display: none; }
+    .server-selection { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+    .server-check-label { display: flex; align-items: center; gap: 6px; background: var(--panel-2); border: 1px solid var(--border); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+    .server-check-label input:checked + span { color: var(--accent); font-weight: 600; }
+    .cmd-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+    .btn-cmd { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 10px 15px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: 0.2s; text-align: left; }
+    .btn-cmd:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-cmd.danger { border-color: var(--offline); color: var(--offline); text-align: center; }
+    .btn-cmd.danger:hover { background: var(--offline); color: white; }
 
     /* ---------- TABELAS ---------- */
-    .table-container { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); overflow-x: auto; -webkit-overflow-scrolling: touch;}
-    table { width: 100%; border-collapse: collapse; min-width: 500px; }
-    th { font-size: 11px; text-transform: uppercase; color: var(--text-muted); text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--card-border); font-weight: 600; background: var(--bg-color); }
-    td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid var(--card-border); color: var(--text-main); }
-    tr:last-child td { border-bottom: none; }
+    .table-panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 600px; }
+    thead th { background: var(--panel-2); color: var(--text-dim); font-size: 0.7rem; text-transform: uppercase; text-align: left; padding: 13px 16px; border-bottom: 1px solid var(--border); }
+    tbody td { padding: 13px 16px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.85rem; }
+    tbody tr:hover td { background: rgba(255,255,255,0.02); }
     
-    .txt-green { color: var(--color-ok); font-weight: bold; }
-    .txt-red { color: var(--color-err); font-weight: bold; }
-    .txt-gray { color: var(--text-muted); }
-    .mono { font-family: monospace; font-size: 14px; }
+    .status-pill { display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; }
+    .st-online { background: var(--online-dim); color: var(--online); }
+    .st-offline { background: var(--offline-dim); color: var(--offline); }
 
-    /* ---------- CHARTS ---------- */
-    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-bottom: 20px; }
-    .chart-box { background: var(--card-bg); padding: 16px; border-radius: var(--radius); border: 1px solid var(--card-border); height: 260px; }
+    .tg-chip { display: inline-block; min-width: 28px; text-align: center; padding: 3px 9px; border-radius: 7px; background: var(--accent-dim); color: var(--accent); font-weight: 600; font-size: 0.82rem; }
+    .tg-chip.zero { background: transparent; color: var(--text-faint); font-weight: 400; }
+    
+    .num-online { color: var(--online); font-weight: 600; }
+    .num-offline { color: var(--offline); font-weight: 600; }
+    .num-zero { color: var(--text-faint); font-weight: 400; }
+    .mono { font-family: 'IBM Plex Mono', monospace; }
 
-    /* ---------- MODAL DE ALERTAS ---------- */
-    .alerts-panel { position: fixed; top: 60px; right: 16px; width: 320px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 9999; max-height: 400px; overflow-y: auto; display: none; }
-    .alerts-panel.active { display: block; }
-    .alerts-header { padding: 12px 16px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--card-bg); }
-    .alert-item { padding: 12px 16px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; gap: 10px; font-size: 13px; background: var(--bg-color); }
-    .btn-dismiss { background: transparent; color: var(--text-muted); border: none; cursor: pointer; padding: 0; font-size: 16px; }
+    /* ---------- DASHBOARD INDIVIDUAL (GRÁFICOS E ABAS) ---------- */
+    .charts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 25px; }
+    .chart-box { background: var(--panel); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border); height: 320px; }
+    .tabs-nav { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 20px; background: var(--panel); padding: 5px; border-radius: 10px; border: 1px solid var(--border); width: fit-content; }
+    .tab-item { padding: 10px 25px; border-radius: 8px; cursor: pointer; font-weight: 600; color: var(--text-dim); transition: 0.2s; }
+    .tab-item.active { background: var(--panel-2); color: var(--accent); border: 1px solid var(--border); }
+    .view-section { display: none; }
+    .view-section.active { display: block; animation: fadeIn 0.4s; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .vehicle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
+    .v-card { background: var(--panel); border-radius: 10px; padding: 15px; border: 1px solid var(--border); }
+    .v-id { font-size: 1.5rem; font-weight: 700; color: var(--text); }
+    .v-meta { font-size: 0.75rem; color: var(--text-dim); background: var(--panel-2); padding: 4px 8px; border-radius: 4px; margin-top: 8px; display: inline-block; }
 
-    /* ---------- OTIMIZAÇÃO MOBILE (APP) ---------- */
+    /* ================= RESPONSIVIDADE ================= */
+    @media (max-width: 900px) {
+        .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+        .charts-grid { grid-template-columns: 1fr; }
+    }
     @media (max-width: 768px) {
-        /* Grade 2x2 para os KPIs no mobile */
-        .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-        .kpi-card { padding: 12px 10px; }
-        .kpi-value { font-size: 22px; }
-        .kpi-sub { font-size: 9px; line-height: 1.1; }
-        
-        .filters-row { flex-direction: column; align-items: stretch; }
-        .filters-row input, .filters-row button { width: 100%; min-height: 44px;}
-        .cmd-grid { grid-template-columns: 1fr; }
-        
-        /* Ajuste fino do Header para não amassar no mobile */
-        .brand h1 { font-size: 16px; }
-        .btn-logout { padding: 6px 10px; font-size: 11px; }
-        
-        .alerts-panel { right: 10px; left: 10px; width: auto; }
+        body { padding: 15px; }
+        .topbar { flex-direction: column; align-items: flex-start; gap: 15px; }
+        .header-actions { width: 100%; justify-content: space-between; }
+        .controls { flex-direction: column; align-items: stretch; }
+        .controls .control-group, .controls button { width: 100%; }
+        .controls input { width: 100%; box-sizing: border-box; }
+        .cmd-actions { grid-template-columns: 1fr; }
+        .alerts-panel { width: calc(100% - 30px); right: 15px; top: 130px; }
+        .table-panel { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    }
+    @media (max-width: 480px) {
+        .kpi-strip { grid-template-columns: 1fr; }
+        .vehicle-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
+<div class="wrap">
 
   <!-- ================= TELA DE LOGIN ================= -->
-  <div id="login-screen" class="login-container">
-      <div class="login-card">
-        <h1 style="color: #fff; margin-bottom: 5px;">Zylker NOC</h1>
-        <p style="color: var(--text-muted); margin-top: 0;">Acesso Central</p>
-        
-        <input type="email" id="email" placeholder="E-mail">
-        <input type="password" id="password" placeholder="Senha" onkeyup="if(event.key === 'Enter') fazerLogin()">
-        
-        <button class="btn-primary" onclick="fazerLogin()">Acessar Painel</button>
-        <button class="btn-text" onclick="recuperarSenha()">Esqueceu a senha?</button>
-        
-        <div id="status-msg" class="aviso"></div>
-      </div>
+  <div id="login-screen" class="login-card">
+    <div style="margin-bottom: 25px;">
+        <div class="brand-mark" style="margin: 0 auto 15px; width: 50px; height: 50px;">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 28px; height: 28px;">
+                <path d="M4 12a8 8 0 0 1 16 0" stroke="#04211d" stroke-width="2" stroke-linecap="round"/>
+                <path d="M7 12a5 5 0 0 1 10 0" stroke="#04211d" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="12" cy="15" r="2" fill="#04211d"/>
+            </svg>
+        </div>
+        <h1 style="justify-content: center; font-size: 1.8rem;">Monitoramento</h1>
+        <p style="color: var(--text-dim); font-size: 0.85rem; margin-top: 5px;">Acesso ao PWA Central</p>
+    </div>
+    <input type="email" id="email" placeholder="E-mail de acesso">
+    <input type="password" id="password" placeholder="Senha" onkeyup="if(event.key === 'Enter') fazerLogin()">
+    
+    <button class="btn-primary" style="width:100%" onclick="fazerLogin()">Entrar Seguramente</button>
+    <button class="btn-ghost" onclick="recuperarSenha()">Esqueci minha senha</button>
+    
+    <div id="status-msg" class="aviso"></div>
   </div>
 
   <!-- ================= TELA DE REDEFINIR SENHA ================= -->
-  <div id="reset-password-screen" class="login-container hidden">
-      <div class="login-card">
-        <h1 style="color: #fff;">Nova Senha</h1>
-        <p style="color: var(--text-muted);">Configure sua credencial de acesso.</p>
-        <input type="password" id="new-password" placeholder="Mínimo 6 caracteres" onkeyup="if(event.key === 'Enter') salvarNovaSenha()">
-        <button class="btn-primary" onclick="salvarNovaSenha()">Salvar</button>
-        <div id="reset-status-msg" class="aviso"></div>
-      </div>
+  <div id="reset-password-screen" class="login-card hidden">
+    <div style="margin-bottom: 20px;">
+        <h1 style="justify-content: center; font-size: 1.5rem; color: var(--accent);">Nova Senha</h1>
+        <p style="color: var(--text-dim); font-size: 0.85rem; margin-top: 5px;">Crie uma nova senha para o seu acesso.</p>
+    </div>
+    <input type="password" id="new-password" placeholder="Nova senha (mínimo 6 caracteres)" onkeyup="if(event.key === 'Enter') salvarNovaSenha()">
+    <button class="btn-primary" style="width:100%" onclick="salvarNovaSenha()">Salvar e Entrar</button>
+    <div id="reset-status-msg" class="aviso"></div>
   </div>
 
-  <!-- ================= CAIXA DE ALERTAS ================= -->
+  <!-- ================= CAIXA DE ALERTAS (MODAL) ================= -->
   <div id="alerts-panel" class="alerts-panel">
-      <div class="alerts-header">
-          <h3 style="margin:0; font-size: 13px; color: #fff;">Alertas Críticos</h3>
-          <button class="btn-text" style="padding:0; margin:0;" onclick="marcarTodosLidos()">Limpar</button>
+      <div style="padding: 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--panel); z-index: 2;">
+          <h3 style="margin: 0; font-size: 0.95rem; color: var(--accent);">Alertas do Sistema</h3>
+          <button class="btn-cmd" style="padding: 4px 8px; font-size: 0.7rem; min-width: auto; text-align: center;" onclick="marcarTodosLidos()">Limpar tudo</button>
       </div>
       <div id="alerts-list">
-          <div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 12px;">Nenhum alerta.</div>
+          <div style="padding: 20px; text-align: center; color: var(--text-dim); font-size: 0.85rem;">Nenhum alerta pendente.</div>
       </div>
   </div>
 
-  <!-- ================= TELA MESTRE (ADMIN NOC) ================= -->
-  <div id="admin-screen" class="hidden wrap">
+  <!-- ================= TELA MESTRE (ADMIN E MULTI-GARAGEM) ================= -->
+  <div id="admin-screen" class="hidden">
     
     <div class="topbar">
         <div class="brand">
-            <h1>Zylker NOC <span class="role-badge" id="mestre-role-badge">ADMIN</span></h1>
-            <span class="last-update" id="master-last-update">Buscando...</span>
+            <div class="brand-mark">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="15" r="2" fill="#04211d"/></svg>
+            </div>
+            <div>
+                <h1>Painel Mestre <span class="role-badge" id="mestre-role-badge">ADMIN</span></h1>
+                <div style="font-size: 0.78rem; color: var(--text-dim);">Visão Geral das Garagens</div>
+            </div>
         </div>
         <div class="header-actions">
-            <button class="btn-icon" onclick="toggleAlerts()">🔔<div id="bell-badge-admin" class="bell-badge hidden">0</div></button>
-            <button class="btn-logout" onclick="fazerLogout()">Sair</button>
+            <button class="btn-bell" onclick="toggleAlerts()">🔔<div id="bell-badge-admin" class="bell-badge hidden">0</div></button>
+            <button class="btn-logout" onclick="fazerLogout()">Sair do Sistema</button>
         </div>
     </div>
 
-    <!-- ABAS DO APP ADMIN -->
-    <div class="tabs" id="admin-tabs">
-        <div class="tab active" onclick="switchAdminTab('admin-geral', this)">Visão Geral</div>
-        <div class="tab" onclick="switchAdminTab('admin-lista', this)">Tabela de Garagens</div>
-        <div class="tab" id="tab-admin-comandos" onclick="switchAdminTab('admin-comandos', this)" style="display: none;">Terminal Remoto</div>
-    </div>
-
-    <!-- ABA 1: VISÃO GERAL (KPIs e Status Strip) -->
-    <div id="admin-geral" class="admin-view active">
-        <!-- FAIXA DE STATUS -->
-        <div class="status-strip-container">
-            <div class="status-strip-title">Status atual dos Monitores</div>
-            <div class="status-blocks" id="status-blocks-container">
-                <span style="color: var(--text-muted); font-size: 11px;">Carregando...</span>
-            </div>
+    <!-- KPIs MESTRE -->
+    <div class="kpi-strip">
+        <div class="kpi" style="--kpi-color: var(--online)">
+            <div class="kpi-label">Veículos Online</div>
+            <div class="kpi-value" id="kpi-online-total">0</div>
         </div>
-
-        <!-- KPIs 2x2 no Mobile -->
-        <div class="kpi-grid">
-            <div class="kpi-card">
-                <div class="kpi-title">Veículos Online</div>
-                <div class="kpi-value"><span id="kpi-online-total">0</span><span class="kpi-unit">veíc.</span></div>
-                <div class="kpi-sub">Comunicação nas últimas 24h</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-title">Veículos Offline</div>
-                <div class="kpi-value"><span id="kpi-offline-total">0</span><span class="kpi-unit">veíc.</span></div>
-                <div class="kpi-sub">Sem comunicação recente</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-title">Tráfego de TGs</div>
-                <div class="kpi-value"><span id="kpi-tgs-total">0</span><span class="kpi-unit">arq.</span></div>
-                <div class="kpi-sub">Recebidos na data filtrada</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-title">Unidades Ativas</div>
-                <div class="kpi-value"><span id="kpi-garagens-total">0</span><span class="kpi-unit">unid.</span></div>
-                <div class="kpi-sub">Garagens operantes</div>
-            </div>
+        <div class="kpi" style="--kpi-color: var(--offline)">
+            <div class="kpi-label">Veículos Offline</div>
+            <div class="kpi-value" id="kpi-offline-total">0</div>
+        </div>
+        <div class="kpi" style="--kpi-color: var(--accent)">
+            <div class="kpi-label">TGs Coletados</div>
+            <div class="kpi-value" id="kpi-tgs-total">0</div>
+        </div>
+        <div class="kpi" style="--kpi-color: #8a96b3">
+            <div class="kpi-label">Garagens Ativas</div>
+            <div class="kpi-value" id="kpi-garagens-total">0</div>
         </div>
     </div>
 
-    <!-- ABA 2: LISTA / TABELA -->
-    <div id="admin-lista" class="admin-view">
-        <div class="panel-box filters-row">
+    <!-- FILTROS E DATA MESTRE -->
+    <div class="controls">
+        <div class="control-group">
+            <span class="control-label">📅 TGs do dia</span>
             <input type="date" id="date-selector-mestre">
-            <input type="text" id="filtro-garagem" placeholder="Filtrar nome...">
-            <button class="btn-action" id="btn-atualizar-mestre" onclick="atualizarTGsMestre()">Atualizar TGs</button>
         </div>
-
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Monitor</th>
-                        <th>Status</th>
-                        <th style="text-align: right;">On</th>
-                        <th style="text-align: right;">Off</th>
-                        <th style="text-align: center;">TGs (<span id="tg-header-date"></span>)</th>
-                        <th style="text-align: right;">Ação</th>
-                    </tr>
-                </thead>
-                <tbody id="admin-garages-list">
-                    <tr><td colspan="6" style="text-align:center;">Carregando dados...</td></tr>
-                </tbody>
-            </table>
+        <div class="control-group">
+            <span class="control-label">🔍 Filtrar</span>
+            <input type="text" id="filtro-garagem" placeholder="Nome da garagem...">
+        </div>
+        <button class="btn-primary" id="btn-atualizar-mestre" onclick="atualizarTGsMestre()">Atualizar</button>
+        <div class="info-note">
+            ℹ️ <b>Online / Offline</b> sempre refletem a situação de <b>hoje</b>. A data acima só filtra a coluna de TGs.
         </div>
     </div>
 
-    <!-- ABA 3: COMANDOS REMOTOS -->
-    <div id="admin-comandos" class="admin-view">
-        <div class="panel-box">
-            <h2 class="panel-title">Deploy de Scripts Remotos</h2>
-            <div style="margin-bottom: 15px; font-size: 12px; color: var(--color-chart);">
-                <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" onclick="toggleTodasGaragens()"> Marcar todos os Endpoints</label>
-            </div>
-            <div id="cmd-server-list" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; max-height: 120px; overflow-y: auto;"></div>
+    <!-- PAINEL DE COMANDOS REMOTOS (Visível apenas para ADMIN) -->
+    <div class="controls-panel" id="panel-comandos-remotos">
+        <h3 style="margin-top: 0; color: var(--accent);">⚡ Ações Remotas (Menu Principal)</h3>
+        <p style="font-size: 0.8rem; color: var(--text-dim);">Selecione os servidores alvo e dispare os comandos para operação.</p>
+        
+        <div class="server-selection" id="cmd-server-list">
+            <!-- Checkboxes injetados aqui -->
+        </div>
 
-            <div class="cmd-grid">
-                <button class="btn-cmd" onclick="dispararComando('reprocessar', true, 'Data (DD/MM/YYYY):')">> Reprocessar Data</button>
-                <button class="btn-cmd" onclick="dispararComando('reiniciar_biometria')">> Reiniciar Biometria</button>
-                <button class="btn-cmd" onclick="dispararComando('criar_tsk', true, 'Prefixos (vírgula):')">> Gerar TSK Lote</button>
-                <button class="btn-cmd" onclick="dispararComando('monitorar_tsk')">> Forçar Scan TSK</button>
-                <button class="btn-cmd" onclick="dispararComando('relatorio_tsk')">> Enviar Log TSK</button>
-                <button class="btn-cmd" onclick="dispararComando('gerar_relatorio')">> Forçar Relatório TGs</button>
-                <button class="btn-cmd" onclick="dispararComando('restart')">> Restart Serviços (Python)</button>
-                <button class="btn-cmd danger" onclick="dispararComando('reiniciar_pc')">! Reboot Server (Win)</button>
-            </div>
+        <div class="cmd-actions">
+            <button class="btn-cmd" onclick="dispararComando('reprocessar', true, 'Digite a data para reprocessar (DD/MM/YYYY):')">1. Reprocessar Data</button>
+            <button class="btn-cmd" onclick="dispararComando('reiniciar_biometria')">2. Reiniciar Biometria</button>
+            <button class="btn-cmd" onclick="dispararComando('git_pull_restart')">3. Git Pull + Reiniciar Bot</button>
+            <button class="btn-cmd" onclick="dispararComando('criar_tsk', true, 'Digite os prefixos para gerar TSK (separados por vírgula):')">4. Criar TSK</button>
+            <button class="btn-cmd" onclick="dispararComando('monitorar_tsk')">5. Monitorar TSK agora</button>
+            <button class="btn-cmd" onclick="dispararComando('relatorio_tsk')">6. Relatório TSK (3 dias)</button>
+            <button class="btn-cmd" onclick="dispararComando('alertar_tsk')">7. Alertar TSK ausentes</button>
+            <button class="btn-cmd" onclick="dispararComando('listar_tgs', true, 'Digite a data (DD/MM/YYYY):')">8. Listar Arquivos TGs</button>
+            <button class="btn-cmd" onclick="dispararComando('gerar_relatorio')">9. Gerar Relatório Com.</button>
+            <button class="btn-cmd danger" onclick="dispararComando('reiniciar_pc')">10. Reiniciar PC (Windows)</button>
+            <button class="btn-cmd" onclick="dispararComando('restart')">11. Reiniciar Programas (V3LAN)</button>
         </div>
     </div>
 
+    <!-- TABELA MESTRE -->
+    <div class="table-panel">
+        <table>
+            <thead>
+                <tr>
+                    <th>Status</th>
+                    <th>Nome da Garagem</th>
+                    <th style="text-align: right;">Online<br><small>hoje</small></th>
+                    <th style="text-align: right;">Offline<br><small>hoje</small></th>
+                    <th style="text-align: center;">TGs<br><small id="tg-header-date" style="color:var(--accent);">hoje</small></th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="admin-garages-list">
+                <tr><td colspan="6" style="text-align:center;">Carregando garagens...</td></tr>
+            </tbody>
+        </table>
+    </div>
   </div>
 
   <!-- ================= TELA DO DASHBOARD INDIVIDUAL ================= -->
-  <div id="app-screen" class="hidden wrap">
+  <div id="app-screen" class="hidden">
     
     <div class="topbar">
-        <div class="brand" style="flex-direction: row; align-items: center; gap: 10px;">
-            <button style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; padding:0; font-size: 20px;" onclick="voltarParaAdmin()">◀</button> 
+        <div class="brand">
+            <button class="btn-voltar" onclick="voltarParaAdmin()">⬅️ Voltar</button>
             <div>
-                <h1 id="garage-name-display">Monitor</h1>
-                <span class="last-update" id="indiv-last-update">Sincronizando...</span>
+                <h1>📊 <span id="garage-name-display">Garagem</span></h1>
+                <div style="font-size: 0.78rem; color: var(--text-dim);" id="last-update">Sincronizando...</div>
             </div>
         </div>
         <div class="header-actions">
-            <button class="btn-icon" onclick="toggleAlerts()">🔔<div id="bell-badge-garage" class="bell-badge hidden">0</div></button>
-            <button class="btn-logout" onclick="fazerLogout()">Sair</button>
+            <button class="btn-bell" onclick="toggleAlerts()">🔔<div id="bell-badge-garage" class="bell-badge hidden">0</div></button>
+            <button class="btn-logout" onclick="fazerLogout()">Sair do Sistema</button>
         </div>
     </div>
 
-    <div class="kpi-grid">
-        <div class="kpi-card"><div class="kpi-title">Tráfego OK</div><div class="kpi-value"><span id="kpi-online">0</span></div></div>
-        <div class="kpi-card"><div class="kpi-title">Sem Resposta</div><div class="kpi-value"><span id="kpi-offline">0</span></div></div>
-        <div class="kpi-card"><div class="kpi-title">Avisos / Erros</div><div class="kpi-value" style="color: var(--color-err);"><span id="kpi-critical">0</span></div></div>
-        <div class="kpi-card"><div class="kpi-title">Total Nodes</div><div class="kpi-value"><span id="kpi-total">0</span></div></div>
+    <!-- KPIs INDIVIDUAL -->
+    <div class="kpi-strip">
+        <div class="kpi" style="--kpi-color: var(--online)"><div class="kpi-label">Online</div><div class="kpi-value" id="kpi-online">0</div></div>
+        <div class="kpi" style="--kpi-color: var(--danger)"><div class="kpi-label">Críticos/Erros</div><div class="kpi-value" id="kpi-critical">0</div></div>
+        <div class="kpi" style="--kpi-color: var(--offline)"><div class="kpi-label">Offline</div><div class="kpi-value" id="kpi-offline">0</div></div>
+        <div class="kpi" style="--kpi-color: var(--accent)"><div class="kpi-label">Frota Total</div><div class="kpi-value" id="kpi-total">0</div></div>
     </div>
 
+    <!-- GRÁFICOS -->
     <div class="charts-grid">
         <div class="chart-box">
-            <div class="kpi-title">Histórico de Pings (15 Dias)</div>
-            <div style="height: 200px;"><canvas id="trendChart"></canvas></div>
+            <h3 style="margin-top:0; color:var(--text-dim); font-size:0.9rem;">Tendência (Últimos 15 Dias)</h3>
+            <div style="height: 250px;"><canvas id="trendChart"></canvas></div>
         </div>
         <div class="chart-box">
-            <div class="kpi-title">Status da Rede</div>
-            <div style="height: 200px; position: relative;"><canvas id="statusChart"></canvas></div>
+            <h3 style="margin-top:0; color:var(--text-dim); font-size:0.9rem;">Distribuição Atual</h3>
+            <div style="height: 250px; position: relative;"><canvas id="statusChart"></canvas></div>
         </div>
     </div>
 
-    <div class="tabs">
-        <div class="tab active" onclick="switchGarageTab('tab-online', this)">Conectados</div>
-        <div class="tab" onclick="switchGarageTab('tab-critical', this)">Logs Erro</div>
-        <div class="tab" onclick="switchGarageTab('tab-offline', this)">Down</div>
+    <!-- ABAS -->
+    <div class="tabs-nav">
+        <div class="tab-item active" onclick="switchTab('tab-online')">✅ Online</div>
+        <div class="tab-item" onclick="switchTab('tab-critical')">🚨 Erros</div>
+        <div class="tab-item" onclick="switchTab('tab-offline')">⚠️ Offline</div>
     </div>
 
-    <div id="tab-online" class="garage-view active">
-        <div class="table-container">
-            <table>
-                <thead><tr><th>Node (Prefixo)</th><th>Último Ping</th><th>Firmware | EOD</th></tr></thead>
-                <tbody id="list-online"></tbody>
-            </table>
-        </div>
+    <!-- LISTAS -->
+    <div id="tab-online" class="view-section active">
+        <div class="vehicle-grid" id="list-online"></div>
     </div>
 
-    <div id="tab-critical" class="garage-view">
-        <div class="table-container">
+    <div id="tab-critical" class="view-section">
+        <div class="table-panel">
             <table>
-                <thead><tr><th>Node</th><th>Exception/Log</th><th>Time</th><th>Firmware</th></tr></thead>
+                <thead><tr><th>Prefixo</th><th>Erro Reportado</th><th>Hora</th><th>Versão</th></tr></thead>
                 <tbody id="list-critical"></tbody>
             </table>
         </div>
     </div>
 
-    <div id="tab-offline" class="garage-view">
-        <div class="table-container">
+    <div id="tab-offline" class="view-section">
+        <div class="table-panel">
             <table>
-                <thead><tr><th>Node</th><th>Status</th><th>Último Visto</th></tr></thead>
+                <thead><tr><th>Prefixo</th><th>Status</th><th>Última Comunicação</th></tr></thead>
                 <tbody id="list-offline"></tbody>
             </table>
         </div>
     </div>
 
   </div>
+</div>
 
-<!-- =========================================================
-     JAVASCRIPT LÓGICA E SUPABASE
-     ========================================================= -->
 <script>
     // ⚠️ COLOQUE SUAS CHAVES AQUI
     const SUPABASE_URL = 'https://oiszcvmxteebrbtgcily.supabase.co';
@@ -394,361 +371,500 @@
     let currentUserProfile = null;
     let alertasInterval = null;
     
-    let listaGaragens = []; let historicoMestre = []; let tgsMestre = [];
+    // Variáveis Globais do Mestre
+    let listaGaragens = [];
+    let historicoMestre = [];
+    let tgsMestre = [];
+    
+    // Variáveis Globais do Dashboard Individual
     let chartTrend = null; let chartStatus = null;
     let FROTA = []; let METADATA = {}; let HISTORY = {};
 
     // ----------------------------------------------------
-    // AUTH E SENHAS
+    // AUTENTICAÇÃO E NOTIFICAÇÕES
     // ----------------------------------------------------
     async function fazerLogin() {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
       
-      statusMsg.style.color = 'var(--color-chart)';
-      statusMsg.innerText = "Estabelecendo conexão...";
+      statusMsg.style.color = 'var(--accent)';
+      statusMsg.innerText = "⏳ Autenticando...";
 
       const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
       if (error) {
-        statusMsg.style.color = 'var(--color-err)';
-        statusMsg.innerText = "Falha: " + error.message;
+        statusMsg.style.color = 'var(--offline)';
+        statusMsg.innerText = "❌ Acesso Negado: " + error.message;
       } else {
-        statusMsg.style.color = 'var(--color-ok)';
-        statusMsg.innerText = "Conexão estabelecida!";
+        statusMsg.style.color = 'var(--online)';
+        statusMsg.innerText = "✅ Credenciais aceitas! Carregando...";
         verificarSessao();
       }
     }
 
     async function recuperarSenha() {
-      const emailDigitado = prompt("Digite o e-mail para reset de credencial:");
-      if (!emailDigitado || emailDigitado.trim() === "") return;
+      // Exige o e-mail via prompt explicitamente
+      const emailDigitado = prompt("Digite o e-mail cadastrado para qual deseja recuperar a senha:");
       
-      statusMsg.style.color = 'var(--color-chart)';
-      statusMsg.innerText = "Enviando pacote de recuperação...";
-      const { data, error } = await supabaseClient.auth.resetPasswordForEmail(emailDigitado.trim(), { redirectTo: window.location.href });
-      if (error) { statusMsg.style.color = 'var(--color-err)'; statusMsg.innerText = "Erro: " + error.message; } 
-      else { statusMsg.style.color = 'var(--color-ok)'; statusMsg.innerText = "Pacote enviado com sucesso!"; }
+      if (!emailDigitado || emailDigitado.trim() === "") {
+          return; // Usuário cancelou ou enviou vazio
+      }
+      
+      statusMsg.style.color = 'var(--accent)';
+      statusMsg.innerText = "⏳ Solicitando redefinição de senha para " + emailDigitado + "...";
+
+      const { data, error } = await supabaseClient.auth.resetPasswordForEmail(emailDigitado.trim(), {
+          redirectTo: window.location.href, 
+      });
+
+      if (error) {
+          statusMsg.style.color = 'var(--offline)';
+          statusMsg.innerText = "❌ Erro ao enviar link: " + error.message;
+      } else {
+          statusMsg.style.color = 'var(--online)';
+          statusMsg.innerText = "✅ Link de recuperação enviado para seu e-mail!";
+      }
     }
 
     async function salvarNovaSenha() {
         const novaSenha = document.getElementById('new-password').value;
         const msg = document.getElementById('reset-status-msg');
-        if (!novaSenha || novaSenha.length < 6) { msg.style.color = 'var(--color-warn)'; msg.innerText = "Requer mínimo de 6 bytes."; return; }
 
-        msg.style.color = 'var(--color-chart)'; msg.innerText = "Sincronizando nova credencial...";
+        if (!novaSenha || novaSenha.length < 6) {
+            msg.style.color = 'var(--warning)';
+            msg.innerText = "⚠️ A senha deve ter pelo menos 6 caracteres.";
+            return;
+        }
+
+        msg.style.color = 'var(--accent)';
+        msg.innerText = "⏳ Atualizando senha...";
+
         const { data, error } = await supabaseClient.auth.updateUser({ password: novaSenha });
 
-        if (error) { msg.style.color = 'var(--color-err)'; msg.innerText = "Erro: " + error.message; } 
-        else {
-            msg.style.color = 'var(--color-ok)'; msg.innerText = "Credencial atualizada.";
+        if (error) {
+            msg.style.color = 'var(--offline)';
+            msg.innerText = "❌ Erro: " + error.message;
+        } else {
+            msg.style.color = 'var(--online)';
+            msg.innerText = "✅ Senha atualizada com sucesso!";
+            
             setTimeout(() => {
+                // Limpa o link de recuperação da URL para não travar a tela
                 window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
+                
                 document.getElementById('reset-password-screen').classList.add('hidden');
                 verificarSessao(); 
-            }, 1500);
+            }, 2000);
         }
     }
 
-    async function fazerLogout() { await supabaseClient.auth.signOut(); location.reload(); }
+    async function fazerLogout() {
+      await supabaseClient.auth.signOut();
+      location.reload();
+    }
 
     async function verificarSessao() {
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (!session) return;
+
       const { data: perfil, error } = await supabaseClient.from('perfis').select('*').eq('id', session.user.id).single();
       
       if (!error && perfil) {
         currentUserProfile = perfil;
         document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('mestre-role-badge').innerText = perfil.perfil;
+        document.getElementById('mestre-role-badge').innerText = perfil.perfil.toUpperCase();
         
-        const multiGaragens = perfil.garagens_acesso && perfil.garagens_acesso.length > 0;
-        if (perfil.perfil === 'admin' || multiGaragens) { mostrarTelaMestreAdmin(); } 
-        else { abrirDashboardGaragem(perfil.garagem_id, "Monitor " + perfil.garagem_id.substring(0,5)); }
+        const temMultiplasGaragens = perfil.garagens_acesso && perfil.garagens_acesso.length > 0;
+        
+        if (perfil.perfil === 'admin' || temMultiplasGaragens) {
+            mostrarTelaMestreAdmin();
+        } else {
+            abrirDashboardGaragem(perfil.garagem_id, "Sua Garagem");
+        }
 
         carregarAlertas();
         if(alertasInterval) clearInterval(alertasInterval);
         alertasInterval = setInterval(carregarAlertas, 15000);
+
       } else {
-          statusMsg.style.color = 'var(--color-err)'; statusMsg.innerText = "Acesso negado: ID não mapeado.";
+          statusMsg.style.color = 'var(--offline)';
+          statusMsg.innerText = "❌ Erro: Perfil não encontrado.";
       }
     }
 
     // ----------------------------------------------------
-    // NAVEGAÇÃO ABAS
+    // SINO DE ALERTAS DO SISTEMA
     // ----------------------------------------------------
-    function switchAdminTab(id, elem) {
-        document.querySelectorAll('.admin-view').forEach(e => e.classList.remove('active'));
-        document.querySelectorAll('#admin-tabs .tab').forEach(e => e.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        elem.classList.add('active');
+    function toggleAlerts() {
+        document.getElementById('alerts-panel').classList.toggle('active');
     }
-
-    function switchGarageTab(id, elem) {
-        document.querySelectorAll('.garage-view').forEach(e => e.classList.remove('active'));
-        document.querySelectorAll('#app-screen .tab').forEach(e => e.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        elem.classList.add('active');
-    }
-
-    // ----------------------------------------------------
-    // ALERTAS
-    // ----------------------------------------------------
-    function toggleAlerts() { document.getElementById('alerts-panel').classList.toggle('active'); }
 
     async function carregarAlertas() {
         if (!currentUserProfile) return;
+
         let query = supabaseClient.from('alertas_sistema').select('id, mensagem, criado_em, garagens(nome_garagem)').eq('lido', false).order('criado_em', { ascending: false }).limit(20);
         
         if (currentUserProfile.perfil !== 'admin') {
-            if (currentUserProfile.garagens_acesso && currentUserProfile.garagens_acesso.length > 0) { query = query.in('garagem_id', currentUserProfile.garagens_acesso); } 
-            else if (currentUserProfile.garagem_id) { query = query.eq('garagem_id', currentUserProfile.garagem_id); }
+            if (currentUserProfile.garagens_acesso && currentUserProfile.garagens_acesso.length > 0) {
+                query = query.in('garagem_id', currentUserProfile.garagens_acesso);
+            } else if (currentUserProfile.garagem_id) {
+                query = query.eq('garagem_id', currentUserProfile.garagem_id);
+            }
         }
+
         const { data, error } = await query;
         if (error) return;
 
+        const badgeAdmin = document.getElementById('bell-badge-admin');
+        const badgeGarage = document.getElementById('bell-badge-garage');
         const count = data.length;
-        ['admin', 'garage'].forEach(id => {
-            const b = document.getElementById(`bell-badge-${id}`);
-            if(b) { b.innerText = count; count > 0 ? b.classList.remove('hidden') : b.classList.add('hidden'); }
-        });
         
         if (count > 0) {
+            if(badgeAdmin) { badgeAdmin.innerText = count; badgeAdmin.classList.remove('hidden'); }
+            if(badgeGarage) { badgeGarage.innerText = count; badgeGarage.classList.remove('hidden'); }
+            
             let html = '';
             data.forEach(a => {
-                const d = new Date(a.criado_em);
-                const t = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-                const g = (currentUserProfile.perfil === 'admin' || (currentUserProfile.garagens_acesso && currentUserProfile.garagens_acesso.length > 1)) ? `<strong style="color:var(--color-chart)">[${a.garagens?.nome_garagem}]</strong> ` : '';
-                const m = a.mensagem.replace('🚨', '').replace('⚠️', '').replace('❌', '').trim();
+                const dateObj = new Date(a.criado_em);
+                const timeStr = `${String(dateObj.getHours()).padStart(2,'0')}:${String(dateObj.getMinutes()).padStart(2,'0')}`;
+                const badgeG = (currentUserProfile.perfil === 'admin' || (currentUserProfile.garagens_acesso && currentUserProfile.garagens_acesso.length > 1)) ? `<strong style="color:var(--accent)">[${a.garagens?.nome_garagem}]</strong> ` : '';
+                const msgLimpa = a.mensagem.replace('🚨', '').replace('⚠️', '').replace('❌', '').trim();
                 
-                html += `<div class="alert-item" id="alert-${a.id}">
-                    <div style="flex:1;">${g}${m} <br><span style="font-size:10px; color:var(--text-muted);">${t}</span></div>
-                    <button class="btn-dismiss" onclick="marcarAlertaLido(${a.id})">✕</button>
+                html += `
+                <div class="alert-item" id="alert-${a.id}">
+                    <div class="alert-msg">
+                        ${badgeG} ${msgLimpa}
+                        <span class="alert-time">Hoje às ${timeStr}</span>
+                    </div>
+                    <button class="btn-dismiss" onclick="marcarAlertaLido(${a.id})" title="Dispensar">✖</button>
                 </div>`;
             });
             document.getElementById('alerts-list').innerHTML = html;
         } else {
-            document.getElementById('alerts-list').innerHTML = `<div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 12px;">Nenhum evento registrado.</div>`;
+            if(badgeAdmin) badgeAdmin.classList.add('hidden');
+            if(badgeGarage) badgeGarage.classList.add('hidden');
+            document.getElementById('alerts-list').innerHTML = `<div style="padding: 20px; text-align: center; color: var(--text-dim); font-size: 0.85rem;">Nenhum alerta pendente.</div>`;
         }
     }
 
     async function marcarAlertaLido(id) {
         await supabaseClient.from('alertas_sistema').update({ lido: true }).eq('id', id);
-        document.getElementById(`alert-${id}`).style.display = 'none'; carregarAlertas(); 
+        const alertEl = document.getElementById(`alert-${id}`);
+        if(alertEl) alertEl.style.display = 'none';
+        carregarAlertas(); 
     }
+
     async function marcarTodosLidos() {
         if (!currentUserProfile) return;
-        let q = supabaseClient.from('alertas_sistema').update({ lido: true }).eq('lido', false);
+        let query = supabaseClient.from('alertas_sistema').update({ lido: true }).eq('lido', false);
+        
         if (currentUserProfile.perfil !== 'admin') {
-            if (currentUserProfile.garagens_acesso?.length > 0) q = q.in('garagem_id', currentUserProfile.garagens_acesso);
-            else if (currentUserProfile.garagem_id) q = q.eq('garagem_id', currentUserProfile.garagem_id);
+            if (currentUserProfile.garagens_acesso && currentUserProfile.garagens_acesso.length > 0) {
+                query = query.in('garagem_id', currentUserProfile.garagens_acesso);
+            } else if (currentUserProfile.garagem_id) {
+                query = query.eq('garagem_id', currentUserProfile.garagem_id);
+            }
         }
-        await q; carregarAlertas(); document.getElementById('alerts-panel').classList.remove('active');
+        await query;
+        carregarAlertas();
+        document.getElementById('alerts-panel').classList.remove('active');
     }
 
     // ----------------------------------------------------
-    // MESTRE E COMANDOS
+    // PAINEL MESTRE (DADOS + TGs + COMANDOS)
     // ----------------------------------------------------
-    function updateMasterTime() {
-        const now = new Date();
-        document.getElementById('master-last-update').innerText = `Atualizado: ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-    }
-
     async function mostrarTelaMestreAdmin() {
         document.getElementById('admin-screen').classList.remove('hidden');
-        if (currentUserProfile.perfil === 'admin') { 
-            document.getElementById('tab-admin-comandos').style.display = 'block'; 
+
+        const painelComandos = document.getElementById('panel-comandos-remotos');
+        if (painelComandos) {
+            painelComandos.style.display = currentUserProfile.perfil === 'admin' ? 'block' : 'none';
         }
 
-        const hoje = new Date().toISOString().split('T')[0];
-        if(!document.getElementById('date-selector-mestre').value) document.getElementById('date-selector-mestre').value = hoje;
+        const agora = new Date();
+        const hojeLocal = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`;
+        const dateInput = document.getElementById('date-selector-mestre');
+        if(!dateInput.value) dateInput.value = hojeLocal;
 
-        let qg = supabaseClient.from('garagens').select('*').order('nome_garagem');
-        if (currentUserProfile.perfil !== 'admin' && currentUserProfile.garagens_acesso) qg = qg.in('id', currentUserProfile.garagens_acesso);
-        const { data: g } = await qg; listaGaragens = g || [];
+        let queryGaragens = supabaseClient.from('garagens').select('*').order('nome_garagem');
+        if (currentUserProfile.perfil !== 'admin' && currentUserProfile.garagens_acesso) {
+            queryGaragens = queryGaragens.in('id', currentUserProfile.garagens_acesso);
+        }
+        const { data: garagens } = await queryGaragens;
+        listaGaragens = garagens || [];
 
-        const ontem = new Date(); ontem.setDate(ontem.getDate() - 1);
-        let qh = supabaseClient.from('historico_comunicacoes').select('garagem_id, prefixo, erro').gte('data_hora', ontem.toISOString());
-        if (currentUserProfile.perfil !== 'admin' && currentUserProfile.garagens_acesso) qh = qh.in('garagem_id', currentUserProfile.garagens_acesso);
-        const { data: h } = await qh; historicoMestre = h || [];
+        const ontem = new Date();
+        ontem.setDate(ontem.getDate() - 1);
+        let queryHist = supabaseClient.from('historico_comunicacoes').select('garagem_id, prefixo, erro').gte('data_hora', ontem.toISOString());
+        if (currentUserProfile.perfil !== 'admin' && currentUserProfile.garagens_acesso) {
+            queryHist = queryHist.in('garagem_id', currentUserProfile.garagens_acesso);
+        }
+        const { data: historicos } = await queryHist;
+        historicoMestre = historicos || [];
 
         await atualizarTGsMestre();
-        if (currentUserProfile.perfil === 'admin') renderizarCheckboxesComandos();
+        
+        if (currentUserProfile.perfil === 'admin') {
+            renderizarCheckboxesComandos();
+        }
     }
 
     async function atualizarTGsMestre() {
-        const dt = document.getElementById('date-selector-mestre').value; if(!dt) return;
-        const btn = document.getElementById('btn-atualizar-mestre'); if(btn) btn.innerText = "Buscando...";
-
-        let qtg = supabaseClient.from('tgs_daily').select('*').eq('dt_iso', dt);
-        if (currentUserProfile.perfil !== 'admin' && currentUserProfile.garagens_acesso) qtg = qtg.in('garagem_id', currentUserProfile.garagens_acesso);
-        const { data: t } = await qtg; tgsMestre = t || [];
+        const dateStr = document.getElementById('date-selector-mestre').value;
+        if(!dateStr) return;
         
-        updateMasterTime();
-        renderizarDadosMestre(); if(btn) btn.innerText = "Atualizar TGs";
+        const btn = document.getElementById('btn-atualizar-mestre');
+        if(btn) btn.innerText = "⏳ Atualizando...";
+
+        let queryTGs = supabaseClient.from('tgs_daily').select('*').eq('dt_iso', dateStr);
+        if (currentUserProfile.perfil !== 'admin' && currentUserProfile.garagens_acesso) {
+            queryTGs = queryTGs.in('garagem_id', currentUserProfile.garagens_acesso);
+        }
+        const { data: tgs } = await queryTGs;
+        tgsMestre = tgs || [];
+        
+        const [y, m, d] = dateStr.split('-');
+        document.getElementById('tg-header-date').innerText = `${d}/${m}/${y}`;
+        
+        renderizarDadosMestre(historicoMestre, tgsMestre);
+        if(btn) btn.innerText = "Atualizar";
     }
 
-    document.getElementById('filtro-garagem').addEventListener('input', renderizarDadosMestre);
+    document.getElementById('filtro-garagem').addEventListener('input', () => {
+        renderizarDadosMestre(historicoMestre, tgsMestre);
+    });
 
-    function renderizarDadosMestre() {
-        let htmlTable = ''; let htmlStrip = '';
-        let tot = { on: 0, off: 0, tgs: 0, ativas: 0 }; let hist = {};
-        const filtro = document.getElementById('filtro-garagem').value.trim().toLowerCase();
+    function renderizarDadosMestre(historicos, tgs) {
+        let htmlTable = '';
+        let totais = { online: 0, offline: 0, tgs: 0, garagensAtivas: 0 };
+        let histPorGaragem = {};
+        
+        const filtroTexto = document.getElementById('filtro-garagem').value.trim().toLowerCase();
 
-        historicoMestre.forEach(h => {
-            if(!hist[h.garagem_id]) hist[h.garagem_id] = {};
-            let e = h.erro; if(e) { e = String(e).toLowerCase(); if(['nan','none','0','0000','ok'].some(v=>e.includes(v))) e=null; }
-            hist[h.garagem_id][h.prefixo] = e ? 'E' : 'O';
+        historicos.forEach(h => {
+            if(!histPorGaragem[h.garagem_id]) histPorGaragem[h.garagem_id] = {};
+            let err = h.erro;
+            if (err) {
+                let eStr = String(err).trim().toLowerCase();
+                if (eStr === 'nan' || eStr === 'none' || eStr.includes('0000') || eStr.includes('ok') || eStr === '0') err = null;
+            }
+            histPorGaragem[h.garagem_id][h.prefixo] = err ? 'ERRO' : 'OK';
         });
 
-        listaGaragens.filter(g => g.nome_garagem.toLowerCase().includes(filtro)).forEach(g => {
-            let on = 0; let off = 0;
-            if (hist[g.id]) Object.values(hist[g.id]).forEach(s => s==='O'? on++ : off++);
-            let tgC = tgsMestre.find(t => t.garagem_id === g.id)?.count || 0;
+        const garagensFiltradas = listaGaragens.filter(g => g.nome_garagem.toLowerCase().includes(filtroTexto));
 
-            tot.on += on; tot.off += off; tot.tgs += tgC; if(on>0||off>0) tot.ativas++;
+        garagensFiltradas.forEach(g => {
+            let online = 0; let offline = 0;
+            if (histPorGaragem[g.id]) {
+                Object.values(histPorGaragem[g.id]).forEach(status => { if (status === 'OK') online++; else offline++; });
+            }
 
-            let stClass = 'bg-gray';
-            if(on > 0 && off === 0) stClass = 'bg-ok';
-            else if(on > 0 && off > 0) stClass = 'bg-warn';
-            else if(on === 0 && off > 0) stClass = 'bg-err';
-            
-            htmlStrip += `<div class="status-block ${stClass}" onclick="abrirDashboardGaragem('${g.id}', '${g.nome_garagem}')">${g.nome_garagem}</div>`;
+            let tgObj = tgs.find(t => t.garagem_id === g.id);
+            let tgCount = tgObj ? tgObj.count : 0;
 
-            htmlTable += `<tr>
-                <td style="font-weight:600;">${g.nome_garagem}</td>
-                <td class="${stClass === 'bg-ok' ? 'txt-green' : (stClass === 'bg-gray' ? 'txt-gray' : 'txt-red')}">${(on>0||off>0)?'Operante':'S/ Sinal'}</td>
-                <td class="mono" style="text-align: right; color:${on>0?'#fff':'var(--text-muted)'}">${on}</td>
-                <td class="mono" style="text-align: right; color:${off>0?'var(--color-err)':'var(--text-muted)'}">${off}</td>
-                <td class="mono" style="text-align: center; color:var(--color-chart);">${tgC}</td>
-                <td style="text-align: right;"><button class="btn-action" style="min-height:auto; padding: 6px 12px; font-size:11px;" onclick="abrirDashboardGaragem('${g.id}', '${g.nome_garagem}')">Abrir</button></td>
+            totais.online += online; totais.offline += offline; totais.tgs += tgCount;
+            if(online > 0 || offline > 0) totais.garagensAtivas++;
+
+            let stCls = (online > 0 || offline > 0) ? 'st-online' : 'st-offline';
+            let tgChip = tgCount > 0 ? `<span class="tg-chip">${tgCount}</span>` : `<span class="tg-chip zero">0</span>`;
+
+            htmlTable += `
+            <tr>
+                <td><span class="status-pill ${stCls}"><span class="dot"></span>${stCls === 'st-online' ? 'Ativa' : 'Sem Dados'}</span></td>
+                <td style="font-weight:bold;">${g.nome_garagem}</td>
+                <td class="mono ${online===0?'num-zero':'num-online'}" style="text-align: right;">${online}</td>
+                <td class="mono ${offline===0?'num-zero':'num-offline'}" style="text-align: right;">${offline}</td>
+                <td class="mono" style="text-align: center;">${tgChip}</td>
+                <td><button class="btn-cmd" style="padding: 6px 12px; font-size: 0.75rem; text-align: center;" onclick="abrirDashboardGaragem('${g.id}', '${g.nome_garagem}')">Ver Dashboard</button></td>
             </tr>`;
         });
 
-        document.getElementById('status-blocks-container').innerHTML = htmlStrip || `<span style="color:var(--text-muted); font-size:11px;">Sem dados</span>`;
-        document.getElementById('admin-garages-list').innerHTML = htmlTable || `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted)">Sem registros.</td></tr>`;
-        document.getElementById('kpi-online-total').innerText = tot.on; document.getElementById('kpi-offline-total').innerText = tot.off;
-        document.getElementById('kpi-tgs-total').innerText = tot.tgs; document.getElementById('kpi-garagens-total').innerText = `${tot.ativas}/${listaGaragens.length}`;
-        
-        const dt = document.getElementById('date-selector-mestre').value;
-        if(dt) { const [y, m, d] = dt.split('-'); document.getElementById('tg-header-date').innerText = `${d}/${m}`; }
+        document.getElementById('admin-garages-list').innerHTML = htmlTable || `<tr><td colspan="6" style="text-align:center;">Nenhuma garagem encontrada.</td></tr>`;
+        document.getElementById('kpi-online-total').innerText = totais.online;
+        document.getElementById('kpi-offline-total').innerText = totais.offline;
+        document.getElementById('kpi-tgs-total').innerText = totais.tgs;
+        document.getElementById('kpi-garagens-total').innerText = `${totais.garagensAtivas}/${listaGaragens.length}`;
     }
 
-    let tM = false;
+    let todasMarcadas = false;
     function renderizarCheckboxesComandos() {
-        let html = '';
-        listaGaragens.forEach(g => { html += `<label style="display:flex; align-items:center; gap:4px; font-size:11px; background:var(--bg-color); padding:4px 8px; border-radius:4px;"><input type="checkbox" class="server-checkbox" value="${g.id}"> ${g.nome_garagem}</label>`; });
+        let html = `<label class="server-check-label"><input type="checkbox" onclick="toggleTodasGaragens()"> <span style="color:var(--accent)">Todos</span></label>`;
+        listaGaragens.forEach(g => {
+            html += `<label class="server-check-label"><input type="checkbox" class="server-checkbox" value="${g.id}"> <span>${g.nome_garagem}</span></label>`;
+        });
         document.getElementById('cmd-server-list').innerHTML = html;
     }
-    function toggleTodasGaragens() { tM = !tM; document.querySelectorAll('.server-checkbox').forEach(cb => cb.checked = tM); }
 
-    async function dispararComando(cmd, req = false, msg = "") {
-        const sel = Array.from(document.querySelectorAll('.server-checkbox:checked'));
-        if (sel.length === 0) { alert("ERRO: Selecione endpoints alvo."); return; }
-        let p = null; if (req) { p = prompt(msg); if (!p || !p.trim()) return; }
-        if(!confirm(`Deploy de script [${cmd}] para ${sel.length} host(s)?`)) return;
+    function toggleTodasGaragens() {
+        todasMarcadas = !todasMarcadas;
+        document.querySelectorAll('.server-checkbox').forEach(cb => cb.checked = todasMarcadas);
+    }
 
-        const reg = sel.map(cb => ({ garagem_id: cb.value, comando: cmd, parametros: p, lido: false }));
-        const { error } = await supabaseClient.from('comandos_remotos').insert(reg);
-        if (error) alert("Falha no deploy."); else alert("Script alocado na fila de execução.");
+    async function dispararComando(comandoStr, requerParam = false, msgParam = "") {
+        const selecionados = Array.from(document.querySelectorAll('.server-checkbox:checked'));
+        if (selecionados.length === 0) { alert("⚠️ Selecione pelo menos uma garagem."); return; }
+
+        let parametro = null;
+        if (requerParam) {
+            parametro = prompt(msgParam);
+            if (!parametro || parametro.trim() === "") return;
+        }
+
+        if(!confirm(`Enviar comando [${comandoStr}] para ${selecionados.length} servidor(es)?`)) return;
+
+        const registros = selecionados.map(cb => ({
+            garagem_id: cb.value, comando: comandoStr, parametros: parametro, lido: false
+        }));
+
+        const { error } = await supabaseClient.from('comandos_remotos').insert(registros);
+        if (error) alert("❌ Erro ao enviar comando."); else alert("✅ Comando enviado para a fila de execução!");
     }
 
     // ----------------------------------------------------
-    // DASHBOARD INDIVIDUAL
+    // DASHBOARD INDIVIDUAL DA GARAGEM
     // ----------------------------------------------------
     function voltarParaAdmin() {
-        document.getElementById('app-screen').classList.add('hidden'); document.getElementById('admin-screen').classList.remove('hidden');
-        if(chartTrend) chartTrend.destroy(); if(chartStatus) chartStatus.destroy();
+        document.getElementById('app-screen').classList.add('hidden');
+        document.getElementById('admin-screen').classList.remove('hidden');
+        if(chartTrend) chartTrend.destroy();
+        if(chartStatus) chartStatus.destroy();
     }
 
-    async function abrirDashboardGaragem(id, nome) {
-        document.getElementById('admin-screen').classList.add('hidden'); document.getElementById('app-screen').classList.remove('hidden');
-        document.getElementById('garage-name-display').innerText = nome; carregarDadosDoBanco(id);
+    async function abrirDashboardGaragem(garagemId, garagemNome) {
+        document.getElementById('admin-screen').classList.add('hidden');
+        document.getElementById('app-screen').classList.remove('hidden');
+        document.getElementById('garage-name-display').innerText = garagemNome;
+        carregarDadosDoBanco(garagemId);
     }
 
-    async function carregarDadosDoBanco(id) {
-      document.getElementById('indiv-last-update').innerText = "Baixando pacotes...";
-      let d = new Date(); d.setDate(d.getDate() - 15);
-      const { data, error } = await supabaseClient.from('historico_comunicacoes').select('*').eq('garagem_id', id).gte('data_hora', d.toISOString()).order('data_hora', { ascending: false }).limit(5000);
+    async function carregarDadosDoBanco(garagemId) {
+      document.getElementById('last-update').innerText = "Baixando histórico...";
+      
+      let dataLimite = new Date();
+      dataLimite.setDate(dataLimite.getDate() - 15);
+      
+      let query = supabaseClient.from('historico_comunicacoes').select('*').eq('garagem_id', garagemId).gte('data_hora', dataLimite.toISOString()).order('data_hora', { ascending: false });
+      const { data, error } = await query.limit(5000);
+      
       if (error) return;
 
       FROTA = []; METADATA = {}; HISTORY = {};
-      data.forEach(r => {
-          const v = r.prefixo; if (!FROTA.includes(v)) FROTA.push(v); if (!HISTORY[v]) HISTORY[v] = [];
-          let e = r.erro; if(e) { let es = String(e).toLowerCase(); if(['nan','none','0000','ok','0'].some(x=>es.includes(x))) e=null; }
-          HISTORY[v].push({ d: r.data_hora.replace('T', ' ').substring(0,19), e: e });
-          if (!METADATA[v]) METADATA[v] = { versao: r.versao, eod: r.eod };
+
+      data.forEach(row => {
+          const v = row.prefixo;
+          if (!FROTA.includes(v)) FROTA.push(v);
+          if (!HISTORY[v]) HISTORY[v] = [];
+          
+          let dateStr = row.data_hora.replace('T', ' ').substring(0, 19);
+          
+          let err = row.erro;
+          if (err !== null && err !== undefined) {
+              let errStr = String(err).trim().toLowerCase();
+              if (errStr === 'nan' || errStr === 'none' || errStr.includes('0000') || errStr.includes('ok') || errStr === '0') err = null;
+          }
+
+          HISTORY[v].push({ d: dateStr, e: err });
+          if (!METADATA[v]) METADATA[v] = { versao: row.versao, eod: row.eod, serie: row.serie };
       });
-      const now = new Date();
-      document.getElementById('indiv-last-update').innerText = `Sync: ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+      document.getElementById('last-update').innerText = "Visualizando dados em tempo real.";
       renderDashboardIndividual();
     }
 
+    function switchTab(id) {
+        document.querySelectorAll('.view-section').forEach(e => e.classList.remove('active'));
+        document.querySelectorAll('.tab-item').forEach(e => e.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        const index = id === 'tab-online' ? 0 : id === 'tab-critical' ? 1 : 2;
+        document.querySelectorAll('.tab-item')[index].classList.add('active');
+    }
+
     function renderDashboardIndividual() {
-        const lists = { on: document.getElementById('list-online'), off: document.getElementById('list-offline'), crit: document.getElementById('list-critical') };
+        const lists = { online: document.getElementById('list-online'), offline: document.getElementById('list-offline'), critical: document.getElementById('list-critical') };
         Object.values(lists).forEach(l => l.innerHTML = '');
 
-        let c = { on: 0, off: 0, crit: 0, tot: FROTA.length };
-        const hj = new Date().toISOString().split('T')[0];
+        let counts = { online: 0, offline: 0, critical: 0, total: FROTA.length };
+        
+        const agora = new Date();
+        const dateEndObj = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate(), 23, 59, 59);
+        const dateStartObj = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate(), 0, 0, 0);
 
-        FROTA.forEach(v => {
-            const logs = HISTORY[v] || []; const last = logs.length ? logs[0] : null;
-            if (!last) { c.off++; return; }
-            const isHj = last.d.startsWith(hj); const m = METADATA[v] || {};
+        FROTA.forEach(veiculo => {
+            const logs = HISTORY[veiculo] || [];
+            let lastLog = logs.length > 0 ? logs[0] : null;
 
-            if (isHj) {
-                if (last.e) {
-                    c.crit++; lists.crit.insertAdjacentHTML('beforeend', `<tr><td style="font-weight:600">${v}</td><td class="txt-red">${last.e}</td><td class="mono">${last.d.split(' ')[1]}</td><td>${m.versao||'-'}</td></tr>`);
+            if (!lastLog) { counts.offline++; return; }
+
+            const lastDate = new Date(lastLog.d.replace(' ', 'T'));
+            const isToday = (lastDate >= dateStartObj && lastDate <= dateEndObj);
+            const meta = METADATA[veiculo] || {};
+
+            if (isToday) {
+                if (lastLog.e) {
+                    counts.critical++;
+                    lists.critical.insertAdjacentHTML('beforeend', `<tr><td><strong>${veiculo}</strong></td><td style="color:var(--danger)">${lastLog.e}</td><td>${lastLog.d.split(' ')[1]}</td><td>${meta.versao || '-'}</td></tr>`);
                 } else {
-                    c.on++; lists.on.insertAdjacentHTML('beforeend', `<tr><td style="font-weight:600; color:var(--color-ok);">${v}</td><td class="mono">${last.d.split(' ')[1]}</td><td>v${m.versao||'?'} | EOD ${m.eod||'?'}</td></tr>`);
+                    counts.online++;
+                    lists.online.insertAdjacentHTML('beforeend', `<div class="v-card"><div class="v-header"><span class="v-id">${veiculo}</span><span style="color:var(--success)">●</span></div><div style="font-size:0.8rem; color:var(--text-dim)">🕒 ${lastLog.d.split(' ')[1]}</div><div class="v-meta">v${meta.versao || '?'} | EOD ${meta.eod || '?'}</div></div>`);
                 }
             } else {
-                c.off++; lists.off.insertAdjacentHTML('beforeend', `<tr><td style="font-weight:600">${v}</td><td class="txt-gray">TIMEOUT</td><td class="mono">${last.d}</td></tr>`);
+                counts.offline++;
+                lists.offline.insertAdjacentHTML('beforeend', `<tr><td><strong>${veiculo}</strong></td><td><span class="status-pill st-offline">OFFLINE</span></td><td>${lastLog.d}</td></tr>`);
             }
         });
 
-        document.getElementById('kpi-online').innerText = c.on; document.getElementById('kpi-offline').innerText = c.off;
-        document.getElementById('kpi-critical').innerText = c.crit; document.getElementById('kpi-total').innerText = c.tot;
-        renderCharts(c);
+        document.getElementById('kpi-online').innerText = counts.online;
+        document.getElementById('kpi-offline').innerText = counts.offline;
+        document.getElementById('kpi-critical').innerText = counts.critical;
+        document.getElementById('kpi-total').innerText = counts.total;
+
+        renderCharts(counts);
     }
 
-    function renderCharts(c) {
-        Chart.defaults.font.family = '"Segoe UI", Roboto, sans-serif';
-        Chart.defaults.color = '#8b98a9';
+    function renderCharts(counts) {
+        const textColor = '#8a96b3';
 
         if(chartStatus) chartStatus.destroy();
         chartStatus = new Chart(document.getElementById('statusChart').getContext('2d'), {
             type: 'doughnut',
-            data: { labels: ['OK', 'Erro', 'Inativo'], datasets: [{ data: [c.on, c.crit, c.off], backgroundColor: ['#00e676', '#ff3b30', '#ff9500'], borderWidth: 1, borderColor: '#1c2431' }] },
-            options: { cutout: '80%', responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 8 } } } }
+            data: { labels: ['Online', 'Erro', 'Offline'], datasets: [{ data: [counts.online, counts.critical, counts.offline], backgroundColor: ['#34d399', '#fb6b6b', '#f0ac3f'], borderWidth: 0 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: textColor } } } }
         });
 
-        const lbl = []; const dOn = []; const dErr = [];
-        let b = new Date();
+        const labels = []; const dataOnline = []; const dataErrors = [];
+        let baseDate = new Date();
         for (let i = 14; i >= 0; i--) {
-            let d = new Date(b); d.setDate(d.getDate() - i);
-            let iso = d.toISOString().split('T')[0];
-            lbl.push(`${iso.split('-')[2]}/${iso.split('-')[1]}`);
-            let don = 0; let derr = 0;
-            FROTA.forEach(v => { const l = (HISTORY[v]||[]).find(x=>x.d.startsWith(iso)); if(l){ l.e ? derr++ : don++; } });
-            dOn.push(don); dErr.push(derr);
+            let d = new Date(baseDate); d.setDate(d.getDate() - i);
+            let isoDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            labels.push(`${isoDate.split('-')[2]}/${isoDate.split('-')[1]}`);
+            
+            let dayOnline = 0; let dayError = 0;
+            FROTA.forEach(v => {
+                const log = (HISTORY[v] || []).find(l => l.d.startsWith(isoDate));
+                if(log) { if(log.e) dayError++; else dayOnline++; }
+            });
+            dataOnline.push(dayOnline); dataErrors.push(dayError);
         }
 
         if(chartTrend) chartTrend.destroy();
         chartTrend = new Chart(document.getElementById('trendChart').getContext('2d'), {
             type: 'line',
-            data: { labels: lbl, datasets: [ { label: 'Up', data: dOn, borderColor: '#00e5ff', backgroundColor: 'rgba(0, 229, 255, 0.1)', fill: true, tension: 0, borderWidth: 1, pointRadius: 2, pointBackgroundColor: '#00e5ff' }, { label: 'Down/Err', data: dErr, borderColor: '#ff3b30', backgroundColor: 'transparent', tension: 0, borderWidth: 1, borderDash: [5, 5], pointRadius: 0 } ] },
-            options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#283344' }, beginAtZero: true }, x: { grid: { color: '#283344' } } } }
+            data: { labels: labels, datasets: [ { label: 'Sucesso', data: dataOnline, borderColor: '#34d399', tension: 0.3 }, { label: 'Erros', data: dataErrors, borderColor: '#fb6b6b', tension: 0.3 } ] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: textColor } } }, scales: { y: { grid: { color: '#22304d' }, ticks: { color: textColor } }, x: { grid: { display: false }, ticks: { color: textColor } } } }
         });
     }
 
     // ----------------------------------------------------
-    // INICIALIZAÇÃO
+    // ESCUTAS DE EVENTOS (LOAD E RECUPERAÇÃO DE SENHA)
     // ----------------------------------------------------
+    
     let isRecoveryMode = window.location.hash.includes('type=recovery');
-    supabaseClient.auth.onAuthStateChange(async (e, s) => {
-        if (e === 'PASSWORD_RECOVERY') {
+
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'PASSWORD_RECOVERY') {
             isRecoveryMode = true;
-            document.querySelectorAll('.wrap').forEach(el => el.classList.add('hidden'));
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('admin-screen').classList.add('hidden');
+            document.getElementById('app-screen').classList.add('hidden');
             document.getElementById('reset-password-screen').classList.remove('hidden');
         }
     });
@@ -758,7 +874,11 @@
           document.getElementById('login-screen').classList.add('hidden');
           document.getElementById('reset-password-screen').classList.remove('hidden');
       } else {
-          supabaseClient.auth.getSession().then(({ data: { session } }) => { if (session) verificarSessao(); });
+          supabaseClient.auth.getSession().then(({ data: { session } }) => {
+            if (session) { 
+                verificarSessao(); 
+            }
+          });
       }
     };
 </script>
