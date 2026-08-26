@@ -345,10 +345,16 @@
 let GLOBAL_DATA = [];
 const AUTO_REFRESH_MS = 5 * 60 * 1000;
 
-// Configuração Supabase (OBRIGATÓRIA PARA AÇÕES REMOTAS)
+// =========================================================
+// ⚠️ CONFIGURE SUAS CHAVES DO SUPABASE ABAIXO ⚠️
+// =========================================================
 const SUPABASE_URL = 'https://oiszcvmxteebrbtgcily.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9pc3pjdm14dGVlYnJidGdjaWx5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwMzcyMDYsImV4cCI6MjEwMTYxMzIwNn0.Ca79oZlYfky0j4HRW9KW6WDTDOqwGS_lxQcRSxYdnxY';
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Configuração do Caminho Remoto (Repositório Mestre)
+// Substitua NOME_DO_SEU_REPO_MESTRE pelo nome real do repositório onde os JSONs estão caindo.
+const BASE_URL = 'https://monitoramentov3lan.github.io/tcm-forquilha/docs/';
 
 // Data local (NÃO usar toISOString, que é UTC e adianta o dia à noite no Brasil)
 function formatDateISO(d) {
@@ -458,7 +464,7 @@ function fetchAllData() {
   }
 
   const promises = GARAGENS.map(garagem =>
-    fetch(`${garagem}_status.json?t=${Date.now()}`)
+    fetch(`${BASE_URL}${garagem}_status.json?t=${Date.now()}`)
       .then(res => res.ok ? res.json() : null)
       .then(data => ({ name: garagem, data, status: data ? 'ok' : 'error' }))
       .catch(() => ({ name: garagem, data: null, status: 'error' }))
@@ -530,7 +536,7 @@ function renderTable() {
             ? `<span class="tg-chip">${count}</span>`
             : `<span class="tg-chip zero">0</span>`;
           tgCell = (found.filename && found.filename !== 'N/A')
-            ? `<a class="tg-link" href="${found.filename}" download>${chip}</a>`
+            ? `<a class="tg-link" href="${BASE_URL}${found.filename}" download>${chip}</a>`
             : chip;
         }
       }
@@ -545,7 +551,7 @@ function renderTable() {
 
       const linkPainel = (d.panel_url && d.panel_url !== 'N/A')
         ? `<a class="panel-link" href="${d.panel_url}" target="_blank" rel="noopener">Abrir ↗</a>`
-        : `<a class="panel-link" href="COMUNICAÇÕES_${d.garagem}.html" target="_blank" rel="noopener">Local ↗</a>`;
+        : `<a class="panel-link" href="${BASE_URL}COMUNICAÇÕES_${d.garagem}.html" target="_blank" rel="noopener">Local ↗</a>`;
 
       linhasHTML += `
         <tr>
@@ -604,7 +610,7 @@ function linhaCSV(campos) { return campos.map(csvEscape).join(';'); }
 
 async function buscarListaTGsDaGaragem(filename) {
   try {
-    const resp = await fetch(`${filename}?t=${Date.now()}`);
+    const resp = await fetch(`${BASE_URL}${filename}?t=${Date.now()}`);
     if (!resp.ok) return { ok: false, erro: `HTTP ${resp.status}`, nomes: [] };
     const texto = await resp.text();
     const nomes = texto.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
