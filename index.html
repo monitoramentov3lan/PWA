@@ -2,16 +2,15 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Monitoramento — Garagens</title>
-<link rel="manifest" href="manifest.json">
+
+<!-- Incluindo Supabase para as Ações Remotas -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-
 <style>
   :root {
     --bg: #0a0f1c;
@@ -31,99 +30,125 @@
     --offline-dim: rgba(251,107,107,0.14);
     --radius: 12px;
   }
-  
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
   body {
-    background: radial-gradient(ellipse 900px 500px at 15% -10%, rgba(43,217,201,0.08), transparent 60%), radial-gradient(ellipse 700px 500px at 100% 0%, rgba(240,172,63,0.05), transparent 55%), var(--bg);
-    color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; padding: 28px 24px 60px;
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(43,217,201,0.08), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 0%, rgba(240,172,63,0.05), transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding: 28px 24px 60px;
   }
   .wrap { max-width: 1320px; margin: 0 auto; }
-  .hidden { display: none !important; }
 
-  /* ---------- TELA DE LOGIN ---------- */
-  .login-card { background: var(--panel); max-width: 400px; margin: 10vh auto; padding: 40px 30px; border-radius: var(--radius); border: 1px solid var(--border); text-align: center; }
-  .login-card input { width: 100%; padding: 12px; margin-top: 15px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); outline: none; font-family: 'IBM Plex Mono', monospace;}
-  .login-card input:focus { border-color: var(--accent); }
-  .btn-primary { width: 100%; padding: 12px 20px; margin-top: 20px; border-radius: 8px; background: var(--accent); color: #04211d; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; font-family: 'Inter', sans-serif;}
-  .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
-  .btn-ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--border); padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; width: 100%; margin-top: 10px; font-family: 'Inter', sans-serif;}
-  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
-  .aviso { padding: 10px; margin-top: 15px; font-size: 0.85rem; font-weight: 600; border-radius: 8px; }
-
-  /* ---------- HEADER ---------- */
-  .topbar { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px; margin-bottom: 26px; }
+  /* ---------- header ---------- */
+  .topbar { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 14px; margin-bottom: 20px; }
   .brand { display: flex; align-items: center; gap: 12px; }
-  .brand-mark { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(145deg, var(--accent), #178f83); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 1px rgba(43,217,201,0.3), 0 6px 18px -6px rgba(43,217,201,0.6); flex-shrink: 0; }
+  .brand-mark {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: linear-gradient(145deg, var(--accent), #178f83);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 0 1px rgba(43,217,201,0.3), 0 6px 18px -6px rgba(43,217,201,0.6);
+    flex-shrink: 0;
+  }
   .brand-mark svg { width: 20px; height: 20px; }
-  h1 { font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; font-weight: 700; margin: 0; letter-spacing: -0.01em; display: flex; align-items: center; gap: 10px; }
-  .role-badge { font-size: 0.6rem; font-family: 'Inter', sans-serif; background: var(--panel-2); border: 1px solid var(--border); padding: 4px 10px; border-radius: 20px; color: var(--text-dim); }
+  h1 { font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
   .brand-sub { font-size: 0.78rem; color: var(--text-dim); margin-top: 2px; font-family: 'IBM Plex Mono', monospace; }
-  
-  .header-actions { display: flex; align-items: center; gap: 10px; }
-  .btn-bell { position: relative; background: transparent; border: none; font-size: 1.4rem; cursor: pointer; padding: 5px; }
-  .bell-badge { position: absolute; top: -2px; right: -2px; background: var(--offline); color: white; font-size: 0.65rem; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; }
-  .btn-logout { background: transparent; color: var(--text-dim); border: none; font-size: 0.85rem; cursor: pointer; text-decoration: underline; }
-  .btn-voltar { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; margin-right: 10px; }
+  .live-chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 0.74rem; color: var(--text-dim); font-family: 'IBM Plex Mono', monospace;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 999px;
+    padding: 6px 12px 6px 10px;
+  }
+  .pulse-dot { position: relative; width: 7px; height: 7px; border-radius: 50%; background: var(--online); flex-shrink: 0; }
+  .pulse-dot::before {
+    content: ''; position: absolute; inset: -5px; border-radius: 50%;
+    border: 1.5px solid var(--online); opacity: 0.7;
+    animation: pulse-ring 2s cubic-bezier(.4,0,.3,1) infinite;
+  }
+  @keyframes pulse-ring { 0% { transform: scale(0.5); opacity: 0.8; } 100% { transform: scale(1.8); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .pulse-dot::before { animation: none; } }
 
-  /* ---------- MODAL DE ALERTAS ---------- */
-  .alerts-panel { position: absolute; top: 70px; right: 24px; width: 340px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 10px 40px rgba(0,0,0,0.8); z-index: 9999; max-height: 400px; overflow-y: auto; display: none; }
-  .alerts-panel.active { display: block; animation: fadeIn 0.2s; }
-  .alerts-header { padding: 15px; border-bottom: 1px dashed var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: var(--panel); }
-  .alert-item { padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.02); font-size: 0.85rem; display: flex; justify-content: space-between; gap: 10px; }
-  .alert-msg { flex: 1; line-height: 1.4; color: var(--text); }
-  .alert-time { font-size: 0.7rem; color: var(--text-faint); margin-top: 5px; display: block; font-family: 'IBM Plex Mono', monospace; }
-  .btn-dismiss { background: transparent; border: none; color: var(--text-dim); cursor: pointer; font-size: 1.1rem; padding: 0; }
-  .btn-dismiss:hover { color: var(--accent); }
-
-  /* ---------- ABAS (TABS APP STYLE) ---------- */
-  .tabs-nav { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; border-bottom: 1px solid var(--border); }
-  .tab-btn { background: transparent; color: var(--text-dim); border: none; padding: 10px 16px; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; font-weight: 600; font-size: 0.9rem; transition: 0.2s; font-family: 'Inter', sans-serif;}
-  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  /* ---------- ABAS (TABS) ---------- */
+  .tabs-nav { display: flex; gap: 10px; margin-bottom: 26px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; overflow-x: auto;}
+  .tab-btn { background: transparent; color: var(--text-faint); border: none; padding: 8px 16px; font-size: 0.9rem; font-weight: 600; cursor: pointer; border-radius: 8px; transition: 0.2s; font-family: 'Inter', sans-serif;}
+  .tab-btn:hover { color: var(--text-dim); background: rgba(255,255,255,0.02); }
+  .tab-btn.active { color: var(--accent); background: var(--accent-dim); box-shadow: inset 0 0 0 1px rgba(43,217,201,0.2); }
   
   .view-section { display: none; animation: fadeIn 0.3s ease; }
   .view-section.active { display: block; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-  /* ---------- FAIXA DE STATUS (SCREENSHOT STYLE) ---------- */
-  .status-strip-container { background: var(--panel); border: 1px solid var(--border); padding: 16px 18px; margin-bottom: 20px; border-radius: var(--radius); }
-  .status-strip-title { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 12px; font-weight: 600; font-family: 'Space Grotesk', sans-serif;}
-  .status-blocks { display: flex; flex-wrap: wrap; gap: 8px; }
-  .status-block { padding: 6px 12px; font-size: 0.75rem; font-weight: 700; border-radius: 4px; cursor: pointer; user-select: none; text-transform: uppercase; font-family: 'Inter', sans-serif; letter-spacing: 0.05em; transition: 0.15s;}
-  .status-block:active { transform: scale(0.95); }
-  .status-block.bg-ok { background-color: var(--online); color: #04211d; }
-  .status-block.bg-err { background-color: var(--offline); color: #fff; }
-  .status-block.bg-warn { background-color: var(--stale); color: #000; }
-  .status-block.bg-gray { background-color: var(--panel-2); color: var(--text-dim); border: 1px solid var(--border); }
-
-  /* ---------- KPI STRIP ---------- */
-  .kpi-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
-  .kpi { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; position: relative; overflow: hidden; }
-  .kpi::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--kpi-color, var(--accent)); }
+  /* ---------- KPI strip ---------- */
+  .kpi-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
+  .kpi {
+    background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; position: relative; overflow: hidden;
+  }
+  .kpi::after {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--kpi-color, var(--accent));
+  }
   .kpi-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); font-weight: 600; }
   .kpi-value { font-family: 'IBM Plex Mono', monospace; font-size: 1.85rem; font-weight: 600; margin-top: 6px; color: var(--kpi-color, var(--text)); line-height: 1; }
   .kpi-note { font-size: 0.72rem; color: var(--text-faint); margin-top: 5px; }
 
-  /* ---------- CONTROLES ---------- */
-  .controls { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  /* ---------- controls ---------- */
+  .controls {
+    background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
   .control-group { display: flex; align-items: center; gap: 8px; }
   .control-label { font-size: 0.78rem; color: var(--text-dim); font-weight: 500; white-space: nowrap; }
-  input[type="date"], input[type="text"] { background: var(--panel-2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 8px 12px; font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; outline: none; transition: border-color .15s; }
+  input[type="date"], input[type="text"] {
+    background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 8px; padding: 8px 12px; font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem;
+    outline: none; transition: border-color .15s;
+  }
   input[type="date"]:focus, input[type="text"]:focus { border-color: var(--accent); }
+  input[type="text"] { font-family: 'Inter', sans-serif; min-width: 180px; }
   ::-webkit-calendar-picker-indicator { filter: invert(0.8); cursor: pointer; }
-  .info-note { width: 100%; font-size: 0.76rem; color: var(--text-faint); display: flex; align-items: center; gap: 6px; padding-top: 10px; margin-top: 2px; border-top: 1px dashed var(--border); }
 
-  /* ---------- COMANDOS REMOTOS ---------- */
-  .cmd-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
-  .btn-cmd { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 12px 15px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: 0.2s; text-align: left; font-family: 'Inter', sans-serif;}
+  button {
+    border: none; border-radius: 8px; padding: 9px 16px; font-size: 0.85rem; font-weight: 600;
+    cursor: pointer; transition: filter .15s, transform .1s; font-family: 'Inter', sans-serif;
+  }
+  button:active { transform: translateY(1px); }
+  .btn-primary { background: var(--accent); color: #04211d; }
+  .btn-primary:hover { filter: brightness(1.1); }
+  .btn-ghost { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  button:disabled { opacity: 0.55; cursor: wait; }
+  .controls-spacer { flex: 1; }
+  .info-note {
+    width: 100%; font-size: 0.76rem; color: var(--text-faint); display: flex; align-items: center; gap: 6px;
+    padding-top: 10px; margin-top: 2px; border-top: 1px dashed var(--border);
+  }
+  .info-note b { color: var(--text-dim); }
+
+  /* ---------- AÇÕES REMOTAS ---------- */
+  .cmd-panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+  .cmd-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .btn-cmd { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: 0.2s; text-align: left; }
   .btn-cmd:hover { border-color: var(--accent); color: var(--accent); }
-  .btn-cmd.danger { border-color: var(--offline); color: var(--offline); text-align: center; }
-  .btn-cmd.danger:hover { background: var(--offline); color: white; }
+  .btn-cmd.danger { border-color: rgba(251,107,107,0.3); color: var(--offline); text-align: center;}
+  .btn-cmd.danger:hover { background: var(--offline); color: white; border-color: var(--offline); }
 
-  /* ---------- TABLE PANEL ---------- */
-  .table-panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-  table { width: 100%; border-collapse: collapse; min-width: 600px;}
-  thead th { background: var(--panel-2); color: var(--text-dim); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; text-align: left; padding: 13px 16px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 2; }
+  /* ---------- table panel ---------- */
+  .table-panel {
+    background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+    overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    background: var(--panel-2); color: var(--text-dim); font-size: 0.68rem; text-transform: uppercase;
+    letter-spacing: 0.06em; font-weight: 600; text-align: left; padding: 13px 16px;
+    border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 2;
+  }
   thead th small { display: block; font-size: 0.9em; color: var(--text-faint); text-transform: none; letter-spacing: 0; margin-top: 2px; font-family: 'IBM Plex Mono', monospace; }
   th.num, td.num { text-align: right; }
   tbody td { padding: 13px 16px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.87rem; vertical-align: middle; }
@@ -132,54 +157,59 @@
   .garagem-cell { font-weight: 600; letter-spacing: 0.01em; }
   .mono { font-family: 'IBM Plex Mono', monospace; }
 
-  .status-pill { display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px 5px 9px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.02em; }
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px 5px 9px; border-radius: 999px;
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.02em;
+  }
   .status-pill .dot { width: 6px; height: 6px; border-radius: 50%; position: relative; }
   .st-online { background: var(--online-dim); color: var(--online); }
   .st-online .dot { background: var(--online); }
+  .st-online .dot::before { content:''; position:absolute; inset:-4px; border-radius:50%; border:1.5px solid var(--online); opacity:.6; animation: pulse-ring 2s infinite; }
+  .st-stale { background: var(--stale-dim); color: var(--stale); }
+  .st-stale .dot { background: var(--stale); }
   .st-offline { background: var(--offline-dim); color: var(--offline); }
   .st-offline .dot { background: var(--offline); }
 
   .num-online { color: var(--online); font-weight: 600; }
   .num-offline { color: var(--offline); font-weight: 600; }
-  .num-zero { color: var(--text-faint); font-weight: 400; }
+  .num-offline.zero, .num-online.zero { color: var(--text-faint); font-weight: 400; }
 
-  .tg-chip { display: inline-block; min-width: 28px; text-align: center; padding: 3px 9px; border-radius: 7px; background: var(--accent-dim); color: var(--accent); font-weight: 600; font-size: 0.82rem; }
+  .tg-chip {
+    display: inline-block; min-width: 28px; text-align: center; padding: 3px 9px; border-radius: 7px;
+    background: var(--accent-dim); color: var(--accent); font-weight: 600; font-size: 0.82rem;
+  }
   .tg-chip.zero { background: transparent; color: var(--text-faint); font-weight: 400; }
+  a.tg-link { text-decoration: none; }
+  a.tg-link:hover .tg-chip { filter: brightness(1.2); text-decoration: underline; }
 
-  a.panel-link, button.panel-link { color: var(--accent); background: transparent; border: none; font-family: 'Inter', sans-serif; text-decoration: none; font-weight: 600; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;}
-  a.panel-link:hover, button.panel-link:hover { text-decoration: underline; }
+  .updated-cell { color: var(--text-dim); font-size: 0.78rem; }
+  .updated-cell .rel { color: var(--text-faint); font-size: 0.72rem; }
 
-  /* ---------- GRÁFICOS ---------- */
-  .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 25px; }
-  .chart-box { background: var(--panel); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border); height: 280px; }
+  a.panel-link {
+    color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.82rem;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  a.panel-link:hover { text-decoration: underline; }
 
-  /* ---------- GRID DE VEÍCULOS (ABA ONLINE) ---------- */
-  .vehicle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
-  .v-card { background: var(--panel); border-radius: var(--radius); padding: 15px; border: 1px solid var(--border); border-top: 2px solid var(--online); }
-  .v-id { font-size: 1.2rem; font-weight: 700; color: var(--text); display: flex; justify-content: space-between; align-items: center;}
-  .v-meta { font-size: 0.7rem; color: var(--text-faint); margin-top: 8px; font-family: 'IBM Plex Mono', monospace;}
+  .totals-row td { background: var(--panel-2); font-weight: 700; border-top: 1px solid var(--border); }
+  .totals-row .garagem-cell { color: var(--text-dim); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; }
 
-  /* ---------- RESPONSIVIDADE (MOBILE APP STYLE) ---------- */
+  .empty-row td { text-align: center; padding: 40px 16px; color: var(--text-faint); }
+
+  .export-status { text-align: right; font-size: 0.78rem; color: var(--text-dim); margin-top: 10px; min-height: 1.2em; font-family: 'IBM Plex Mono', monospace; }
+
+  footer { text-align: center; color: var(--text-faint); font-size: 0.74rem; margin-top: 22px; font-family: 'IBM Plex Mono', monospace; }
+
+  /* ---------- responsive ---------- */
   @media (max-width: 900px) {
     .kpi-strip { grid-template-columns: repeat(2, 1fr); }
   }
   @media (max-width: 760px) {
-    body { padding: 16px 12px 60px; }
-    .topbar { flex-direction: column; align-items: flex-start; gap: 15px; }
-    .header-actions { width: 100%; justify-content: space-between; margin-top: 10px; }
-    .controls { flex-direction: column; align-items: stretch; }
-    .controls .control-group, .controls button { width: 100%; justify-content: space-between; }
-    .controls input { flex: 1; min-width: 0; }
-    .cmd-actions { grid-template-columns: 1fr; }
-    .alerts-panel { width: calc(100% - 24px); right: 12px; top: 110px; }
-    
-    /* Mágica da Tabela Responsiva do Modelo */
-    .table-panel { background: transparent; border: none; }
     thead { display: none; }
     table, tbody, tr, td { display: block; width: 100%; }
-    tbody tr { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; padding: 14px 16px; }
-    tbody td { border: none; padding: 6px 0; display: flex; justify-content: space-between; align-items: center; text-align: right; }
-    tbody td::before { content: attr(data-label); color: var(--text-faint); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; text-align: left;}
+    tbody tr { border-bottom: 1px solid var(--border); padding: 14px 16px; }
+    tbody td { border: none; padding: 4px 0; display: flex; justify-content: space-between; align-items: center; }
+    tbody td::before { content: attr(data-label); color: var(--text-faint); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; }
     td.num { text-align: right; }
     .totals-row { display: none; }
   }
@@ -188,684 +218,491 @@
 <body>
 <div class="wrap">
 
-  <!-- ================= TELA DE LOGIN ================= -->
-  <div id="login-screen" class="login-card">
-    <div style="margin-bottom: 25px;">
-        <div class="brand-mark" style="margin: 0 auto 15px; width: 50px; height: 50px;">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 28px; height: 28px;">
-                <path d="M4 12a8 8 0 0 1 16 0" stroke="#04211d" stroke-width="2" stroke-linecap="round"/>
-                <path d="M7 12a5 5 0 0 1 10 0" stroke="#04211d" stroke-width="2" stroke-linecap="round"/>
-                <circle cx="12" cy="15" r="2" fill="#04211d"/>
-            </svg>
-        </div>
-        <h1 style="justify-content: center; font-size: 1.8rem;">Monitoramento</h1>
-        <p style="color: var(--text-dim); font-size: 0.85rem; margin-top: 5px;">Acesso ao PWA Central</p>
-    </div>
-    <input type="email" id="email" placeholder="E-mail de acesso">
-    <input type="password" id="password" placeholder="Senha" onkeyup="if(event.key === 'Enter') fazerLogin()">
-    
-    <button class="btn-primary" onclick="fazerLogin()">Entrar Seguramente</button>
-    <button class="btn-ghost" onclick="recuperarSenha()">Esqueci minha senha</button>
-    
-    <div id="status-msg" class="aviso"></div>
-  </div>
-
-  <!-- ================= TELA DE REDEFINIR SENHA ================= -->
-  <div id="reset-password-screen" class="login-card hidden">
-    <div style="margin-bottom: 20px;">
-        <h1 style="justify-content: center; font-size: 1.5rem; color: var(--accent);">Nova Senha</h1>
-        <p style="color: var(--text-dim); font-size: 0.85rem; margin-top: 5px;">Crie uma nova senha para o seu acesso.</p>
-    </div>
-    <input type="password" id="new-password" placeholder="Nova senha (mínimo 6 caracteres)" onkeyup="if(event.key === 'Enter') salvarNovaSenha()">
-    <button class="btn-primary" onclick="salvarNovaSenha()">Salvar e Entrar</button>
-    <div id="reset-status-msg" class="aviso"></div>
-  </div>
-
-  <!-- ================= CAIXA DE ALERTAS (MODAL) ================= -->
-  <div id="alerts-panel" class="alerts-panel">
-      <div class="alerts-header">
-          <h3 style="margin: 0; font-size: 0.95rem; color: var(--accent); font-family: 'Space Grotesk', sans-serif;">Alertas do Sistema</h3>
-          <button class="btn-dismiss" style="font-size: 0.75rem;" onclick="marcarTodosLidos()">Limpar tudo</button>
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 12a8 8 0 0 1 16 0" stroke="#04211d" stroke-width="2" stroke-linecap="round"/>
+          <path d="M7 12a5 5 0 0 1 10 0" stroke="#04211d" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="12" cy="15" r="2" fill="#04211d"/>
+        </svg>
       </div>
-      <div id="alerts-list">
-          <div style="padding: 20px; text-align: center; color: var(--text-dim); font-size: 0.85rem;">Nenhum alerta pendente.</div>
+      <div>
+        <h1>Monitoramento — Garagens</h1>
+        <div class="brand-sub" id="header-sub">carregando frotas…</div>
+      </div>
+    </div>
+    <div class="live-chip"><span class="pulse-dot"></span><span id="last-updated-text">sincronizando…</span></div>
+  </div>
+
+  <!-- NAVEGAÇÃO DE ABAS -->
+  <div class="tabs-nav">
+      <button class="tab-btn active" onclick="switchTab('tab-visao-geral')">Visão Geral</button>
+      <button class="tab-btn" onclick="switchTab('tab-acoes-remotas')">⚡ Ações Remotas</button>
+  </div>
+
+  <!-- ABA 1: VISÃO GERAL (O Layout Original) -->
+  <div id="tab-visao-geral" class="view-section active">
+      <div class="kpi-strip" id="kpi-strip">
+        <div class="kpi" style="--kpi-color: var(--online)">
+          <div class="kpi-label">Online agora</div>
+          <div class="kpi-value" id="kpi-online">–</div>
+          <div class="kpi-note">veículos que comunicaram hoje</div>
+        </div>
+        <div class="kpi" style="--kpi-color: var(--offline)">
+          <div class="kpi-label">Offline</div>
+          <div class="kpi-value" id="kpi-offline">–</div>
+          <div class="kpi-note">sem comunicação hoje</div>
+        </div>
+        <div class="kpi" style="--kpi-color: var(--accent)">
+          <div class="kpi-label">TGs no dia</div>
+          <div class="kpi-value" id="kpi-tgs">–</div>
+          <div class="kpi-note" id="kpi-tgs-note">arquivos recebidos</div>
+        </div>
+        <div class="kpi" style="--kpi-color: var(--stale)">
+          <div class="kpi-label">Desatualizadas</div>
+          <div class="kpi-value" id="kpi-stale">–</div>
+          <div class="kpi-note">garagens sem ping recente</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Garagens</div>
+          <div class="kpi-value" id="kpi-total-garagens">–</div>
+          <div class="kpi-note">reportando ao painel</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="control-group">
+          <span class="control-label">📅 TGs do dia</span>
+          <input type="date" id="date-selector">
+        </div>
+        <div class="control-group">
+          <span class="control-label">🔍 Filtrar</span>
+          <input type="text" id="filtro-garagem" placeholder="Nome da garagem...">
+        </div>
+        <button class="btn-primary" onclick="renderTable()">Atualizar</button>
+        <button class="btn-ghost" id="btn-export-csv" onclick="exportarCSV()">⭳ Exportar CSV</button>
+        <div class="controls-spacer"></div>
+        <div class="info-note">
+          ℹ️ <b>Online / Offline</b> sempre refletem a situação de <b>hoje</b> (comunicou hoje = Online). A data acima só filtra a coluna de TGs.
+        </div>
+      </div>
+
+      <div class="table-panel">
+        <table>
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Garagem</th>
+              <th class="num">Online<br><small>hoje</small></th>
+              <th class="num">Offline<br><small>hoje</small></th>
+              <th class="num">TGs<br><small id="tg-header-date">—</small></th>
+              <th>Última atualização</th>
+              <th>Painel</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+            <tr class="empty-row"><td colspan="7">Carregando dados das garagens…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="export-status" id="export-status-text"></div>
+  </div>
+
+  <!-- ABA 2: AÇÕES REMOTAS -->
+  <div id="tab-acoes-remotas" class="view-section">
+      <div class="cmd-panel">
+          <h2 style="margin-top: 0; font-family: 'Space Grotesk', sans-serif; color: var(--accent);">Execução de Scripts Remotos</h2>
+          <p style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 25px;">Selecione as garagens na rede e dispare os comandos em lote.</p>
+          
+          <div id="cmd-server-list" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 25px; padding-bottom: 25px; border-bottom: 1px dashed var(--border);">
+              <!-- Checkboxes das garagens injetados via JavaScript -->
+              <span style="color: var(--text-faint); font-size: 0.85rem;">Carregando garagens disponíveis...</span>
+          </div>
+
+          <div class="cmd-grid">
+              <button class="btn-cmd" onclick="dispararComando('reprocessar', true, 'Digite a data para reprocessar (DD/MM/YYYY):')">1. Reprocessar Data</button>
+              <button class="btn-cmd" onclick="dispararComando('reiniciar_biometria')">2. Reiniciar Biometria</button>
+              <button class="btn-cmd" onclick="dispararComando('git_pull_restart')">3. Git Pull + Reiniciar Bot</button>
+              <button class="btn-cmd" onclick="dispararComando('criar_tsk', true, 'Digite os prefixos para gerar TSK (separados por vírgula):')">4. Criar TSK</button>
+              <button class="btn-cmd" onclick="dispararComando('monitorar_tsk')">5. Monitorar TSK agora</button>
+              <button class="btn-cmd" onclick="dispararComando('relatorio_tsk')">6. Relatório TSK (3 dias)</button>
+              <button class="btn-cmd" onclick="dispararComando('alertar_tsk')">7. Alertar TSK ausentes</button>
+              <button class="btn-cmd" onclick="dispararComando('listar_tgs', true, 'Digite a data (DD/MM/YYYY):')">8. Listar Arquivos TGs</button>
+              <button class="btn-cmd" onclick="dispararComando('gerar_relatorio')">9. Forçar Relatório V3LAN</button>
+              <button class="btn-cmd danger" onclick="dispararComando('reiniciar_pc')">10. Reiniciar Servidor (PC)</button>
+              <button class="btn-cmd" onclick="dispararComando('restart')">11. Reiniciar Scripts/V3LAN</button>
+          </div>
       </div>
   </div>
 
-  <!-- ================= TELA MESTRE (ADMIN E MULTI-GARAGEM) ================= -->
-  <div id="admin-screen" class="hidden">
-    
-    <div class="topbar">
-        <div class="brand">
-            <div class="brand-mark">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="15" r="2" fill="#04211d"/></svg>
-            </div>
-            <div>
-                <h1>Monitoramento - Garagens <span class="role-badge" id="mestre-role-badge">ADMIN</span></h1>
-                <div class="brand-sub" id="master-last-update">Sincronizando...</div>
-            </div>
-        </div>
-        <div class="header-actions">
-            <button class="btn-bell" onclick="toggleAlerts()">🔔<div id="bell-badge-admin" class="bell-badge hidden">0</div></button>
-            <button class="btn-logout" onclick="fazerLogout()">Sair do Sistema</button>
-        </div>
-    </div>
-
-    <!-- ABAS DO MESTRE -->
-    <div class="tabs-nav">
-        <button class="tab-btn active" onclick="switchMasterTab('tab-mestre-geral')">Visão Geral</button>
-        <button class="tab-btn" onclick="switchMasterTab('tab-mestre-tabela')">Tabela de Frotas</button>
-        <button class="tab-btn" id="btn-tab-comandos" style="display:none;" onclick="switchMasterTab('tab-mestre-comandos')">Ações Remotas</button>
-    </div>
-
-    <!-- ABA: VISÃO GERAL -->
-    <div id="tab-mestre-geral" class="view-section active">
-        <!-- FAIXA DE STATUS INSPIRADA NA IMAGEM -->
-        <div class="status-strip-container">
-            <div class="status-strip-title">Status atual de todos os monitores (Garagens)</div>
-            <div class="status-blocks" id="status-blocks-container">
-                <span style="color: var(--text-dim); font-size: 0.8rem;">Carregando status...</span>
-            </div>
-        </div>
-
-        <div class="kpi-strip">
-            <div class="kpi" style="--kpi-color: var(--online)">
-                <div class="kpi-label">Veículos Online</div>
-                <div class="kpi-value" id="kpi-online-total">0</div>
-                <div class="kpi-note">comunicaram hoje</div>
-            </div>
-            <div class="kpi" style="--kpi-color: var(--offline)">
-                <div class="kpi-label">Veículos Offline</div>
-                <div class="kpi-value" id="kpi-offline-total">0</div>
-                <div class="kpi-note">sem comunicação hoje</div>
-            </div>
-            <div class="kpi" style="--kpi-color: var(--accent)">
-                <div class="kpi-label">Tráfego de TGs</div>
-                <div class="kpi-value" id="kpi-tgs-total">0</div>
-                <div class="kpi-note">arquivos recebidos</div>
-            </div>
-            <div class="kpi" style="--kpi-color: var(--text-dim)">
-                <div class="kpi-label">Garagens Ativas</div>
-                <div class="kpi-value" id="kpi-garagens-total">0</div>
-                <div class="kpi-note">reportando no banco</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ABA: TABELA DE FROTAS -->
-    <div id="tab-mestre-tabela" class="view-section">
-        <div class="controls">
-            <div class="control-group">
-                <span class="control-label">📅 TGs do dia</span>
-                <input type="date" id="date-selector-mestre">
-            </div>
-            <div class="control-group">
-                <span class="control-label">🔍 Filtrar</span>
-                <input type="text" id="filtro-garagem" placeholder="Nome da garagem...">
-            </div>
-            <button class="btn-primary" style="margin-top:0; width:auto; padding: 9px 16px;" id="btn-atualizar-mestre" onclick="atualizarTGsMestre()">Atualizar</button>
-            <div class="info-note">
-                ℹ️ <b>Online / Offline</b> sempre refletem a situação de <b>hoje</b>. A data acima só filtra a coluna de TGs.
-            </div>
-        </div>
-
-        <div class="table-panel">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Status</th>
-                        <th>Garagem</th>
-                        <th class="num">Online<br><small>hoje</small></th>
-                        <th class="num">Offline<br><small>hoje</small></th>
-                        <th class="num">TGs<br><small id="tg-header-date" style="color:var(--accent);">hoje</small></th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody id="admin-garages-list">
-                    <tr class="empty-row"><td colspan="6">Carregando garagens...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- ABA: COMANDOS REMOTOS (ADMIN) -->
-    <div id="tab-mestre-comandos" class="view-section">
-        <div class="controls" style="flex-direction: column; align-items: flex-start; gap: 15px;">
-            <div>
-                <h3 style="margin-top: 0; color: var(--accent); font-family: 'Space Grotesk', sans-serif;">⚡ Execução de Scripts Remotos</h3>
-                <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0;">Selecione os servidores alvo e dispare os comandos para operação.</p>
-            </div>
-            
-            <div id="cmd-server-list" style="display: flex; flex-wrap: wrap; gap: 10px; width: 100%; border-bottom: 1px dashed var(--border); padding-bottom: 15px;">
-                <!-- Checkboxes injetados aqui -->
-            </div>
-
-            <div class="cmd-actions" style="width: 100%;">
-                <button class="btn-cmd" onclick="dispararComando('reprocessar', true, 'Digite a data para reprocessar (DD/MM/YYYY):')">1. Reprocessar Data</button>
-                <button class="btn-cmd" onclick="dispararComando('reiniciar_biometria')">2. Reiniciar Biometria</button>
-                <button class="btn-cmd" onclick="dispararComando('git_pull_restart')">3. Git Pull + Reiniciar Bot</button>
-                <button class="btn-cmd" onclick="dispararComando('criar_tsk', true, 'Digite os prefixos para gerar TSK (separados por vírgula):')">4. Criar TSK</button>
-                <button class="btn-cmd" onclick="dispararComando('monitorar_tsk')">5. Monitorar TSK agora</button>
-                <button class="btn-cmd" onclick="dispararComando('relatorio_tsk')">6. Relatório TSK (3 dias)</button>
-                <button class="btn-cmd" onclick="dispararComando('alertar_tsk')">7. Alertar TSK ausentes</button>
-                <button class="btn-cmd" onclick="dispararComando('listar_tgs', true, 'Digite a data (DD/MM/YYYY):')">8. Listar Arquivos TGs</button>
-                <button class="btn-cmd" onclick="dispararComando('gerar_relatorio')">9. Gerar Relatório Com.</button>
-                <button class="btn-cmd danger" onclick="dispararComando('reiniciar_pc')">10. Reiniciar PC (Windows)</button>
-                <button class="btn-cmd" onclick="dispararComando('restart')">11. Reiniciar Programas (V3LAN)</button>
-            </div>
-        </div>
-    </div>
-
-  </div>
-
-  <!-- ================= TELA DO DASHBOARD INDIVIDUAL ================= -->
-  <div id="app-screen" class="hidden">
-    
-    <div class="topbar">
-        <div class="brand">
-            <button class="btn-voltar" onclick="voltarParaAdmin()">⬅</button>
-            <div>
-                <h1 id="garage-name-display">Garagem</h1>
-                <div class="brand-sub" id="indiv-last-update">Sincronizando...</div>
-            </div>
-        </div>
-        <div class="header-actions">
-            <button class="btn-bell" onclick="toggleAlerts()">🔔<div id="bell-badge-garage" class="bell-badge hidden">0</div></button>
-            <button class="btn-logout" onclick="fazerLogout()">Sair</button>
-        </div>
-    </div>
-
-    <!-- ABAS DA GARAGEM INDIVIDUAL -->
-    <div class="tabs-nav">
-        <button class="tab-btn active" onclick="switchGarageTab('tab-garage-geral')">Resumo</button>
-        <button class="tab-btn" onclick="switchGarageTab('tab-garage-online')">Conectados</button>
-        <button class="tab-btn" onclick="switchGarageTab('tab-garage-critical')">Erros</button>
-        <button class="tab-btn" onclick="switchGarageTab('tab-garage-offline')">Down</button>
-    </div>
-
-    <!-- ABA: RESUMO (KPIs + Gráficos) -->
-    <div id="tab-garage-geral" class="view-section active">
-        <div class="kpi-strip">
-            <div class="kpi" style="--kpi-color: var(--online)"><div class="kpi-label">Online</div><div class="kpi-value" id="kpi-online">0</div></div>
-            <div class="kpi" style="--kpi-color: var(--offline)"><div class="kpi-label">Críticos/Erros</div><div class="kpi-value" id="kpi-critical">0</div></div>
-            <div class="kpi" style="--kpi-color: var(--stale)"><div class="kpi-label">Sem Sinal</div><div class="kpi-value" id="kpi-offline">0</div></div>
-            <div class="kpi" style="--kpi-color: var(--accent)"><div class="kpi-label">Frota Total</div><div class="kpi-value" id="kpi-total">0</div></div>
-        </div>
-
-        <div class="charts-grid">
-            <div class="chart-box">
-                <h3 style="margin-top:0; color:var(--text-dim); font-size:0.85rem; text-transform:uppercase; letter-spacing:0.05em; font-family:'Inter',sans-serif;">Tendência (Últimos 15 Dias)</h3>
-                <div style="height: 220px;"><canvas id="trendChart"></canvas></div>
-            </div>
-            <div class="chart-box">
-                <h3 style="margin-top:0; color:var(--text-dim); font-size:0.85rem; text-transform:uppercase; letter-spacing:0.05em; font-family:'Inter',sans-serif;">Distribuição Atual</h3>
-                <div style="height: 220px; position: relative;"><canvas id="statusChart"></canvas></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ABA: ONLINE -->
-    <div id="tab-garage-online" class="view-section">
-        <div class="vehicle-grid" id="list-online"></div>
-    </div>
-
-    <!-- ABA: ERROS -->
-    <div id="tab-garage-critical" class="view-section">
-        <div class="table-panel">
-            <table>
-                <thead><tr><th>Prefixo</th><th>Erro Reportado</th><th>Hora</th><th>Versão</th></tr></thead>
-                <tbody id="list-critical"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- ABA: OFFLINE -->
-    <div id="tab-garage-offline" class="view-section">
-        <div class="table-panel">
-            <table>
-                <thead><tr><th>Prefixo</th><th>Status</th><th>Última Comunicação</th></tr></thead>
-                <tbody id="list-offline"></tbody>
-            </table>
-        </div>
-    </div>
-
-  </div>
+  <footer id="footer-info">Atualização automática a cada 5 minutos.</footer>
 </div>
 
+<script src="garagens.js"></script>
 <script>
-    // ⚠️ COLOQUE SUAS CHAVES AQUI
-    const SUPABASE_URL = 'https://oiszcvmxteebrbtgcily.supabase.co';
+let GLOBAL_DATA = [];
+const AUTO_REFRESH_MS = 5 * 60 * 1000;
+
+// Configuração Supabase (OBRIGATÓRIA PARA AÇÕES REMOTAS)
+const SUPABASE_URL = 'https://oiszcvmxteebrbtgcily.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9pc3pjdm14dGVlYnJidGdjaWx5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwMzcyMDYsImV4cCI6MjEwMTYxMzIwNn0.Ca79oZlYfky0j4HRW9KW6WDTDOqwGS_lxQcRSxYdnxY';
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Data local (NÃO usar toISOString, que é UTC e adianta o dia à noite no Brasil)
+function formatDateISO(d) {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+function formatInputToJSONDate(isoDate) {
+  if (!isoDate) return null;
+  const [year, month, day] = isoDate.split('-');
+  return `${day}/${month}/${year}`;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const dateInput = document.getElementById('date-selector');
+  const today = new Date();
+  const minDate = new Date();
+  minDate.setDate(today.getDate() - 30);
+
+  dateInput.max = formatDateISO(today);
+  dateInput.min = formatDateISO(minDate);
+  dateInput.value = formatDateISO(today); // painel sempre abre em HOJE
+
+  document.getElementById('filtro-garagem').addEventListener('input', renderTable);
+
+  fetchAllData();
+  setInterval(fetchAllData, AUTO_REFRESH_MS);
+});
+
+// --- CONTROLE DE ABAS ---
+function switchTab(tabId) {
+    document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    event.currentTarget.classList.add('active');
     
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const statusMsg = document.getElementById('status-msg');
+    // Se abrir comandos, gera os checkboxes com base no arquivo garagens.js
+    if (tabId === 'tab-acoes-remotas') {
+        renderizarCheckboxesComandos();
+    }
+}
 
-    let currentUserProfile = null;
-    let alertasInterval = null;
+// --- LOGICA DE AÇÕES REMOTAS ---
+let todasMarcadas = false;
+function renderizarCheckboxesComandos() {
+    const container = document.getElementById('cmd-server-list');
+    if(container.innerHTML.includes('checkbox')) return; // Já foi renderizado
+
+    let html = `<label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; background:var(--panel-2); padding:6px 12px; border-radius:6px; border:1px solid var(--accent); cursor:pointer;"><input type="checkbox" onclick="toggleTodasGaragens()"> <span style="color:var(--accent); font-weight:bold;">Selecionar Todas</span></label>`;
     
-    let listaGaragens = [];
-    let historicoMestre = [];
-    let tgsMestre = [];
+    if (typeof GARAGENS !== 'undefined') {
+        GARAGENS.forEach(g => {
+            html += `<label style="display:flex; align-items:center; gap:6px; font-size:0.85rem; background:var(--panel-2); padding:6px 12px; border-radius:6px; border:1px solid var(--border); cursor:pointer;"><input type="checkbox" class="server-checkbox" value="${g}"> <span>${g}</span></label>`;
+        });
+    }
+    container.innerHTML = html;
+}
+
+function toggleTodasGaragens() {
+    todasMarcadas = !todasMarcadas;
+    document.querySelectorAll('.server-checkbox').forEach(cb => cb.checked = todasMarcadas);
+}
+
+async function dispararComando(comandoStr, requerParam = false, msgParam = "") {
+    const selecionados = Array.from(document.querySelectorAll('.server-checkbox:checked')).map(cb => cb.value);
+    if (selecionados.length === 0) { alert("⚠️ Selecione pelo menos uma garagem."); return; }
     
-    let chartTrend = null; let chartStatus = null;
-    let FROTA = []; let METADATA = {}; let HISTORY = {};
-
-    // ----------------------------------------------------
-    // NAVEGAÇÃO DE ABAS
-    // ----------------------------------------------------
-    function switchMasterTab(tabId) {
-        document.querySelectorAll('#admin-screen .view-section').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('#admin-screen .tab-btn').forEach(el => el.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-        event.currentTarget.classList.add('active');
+    let parametro = null;
+    if (requerParam) {
+        parametro = prompt(msgParam);
+        if (!parametro || parametro.trim() === "") return;
     }
 
-    function switchGarageTab(tabId) {
-        document.querySelectorAll('#app-screen .view-section').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('#app-screen .tab-btn').forEach(el => el.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
-        event.currentTarget.classList.add('active');
+    if(!confirm(`Enviar script de [${comandoStr}] para ${selecionados.length} host(s)?`)) return;
+
+    // Busca os UUIDs corretos das garagens no Supabase com base nos nomes
+    const { data: garagensDb, error: errG } = await supabaseClient.from('garagens').select('id, nome_garagem').in('nome_garagem', selecionados);
+    
+    if(errG || !garagensDb || garagensDb.length === 0) {
+        alert("❌ Erro ao cruzar os IDs das garagens no Supabase. Verifique se os nomes batem ou se as chaves da API estão preenchidas.");
+        return;
     }
 
-    // ----------------------------------------------------
-    // AUTENTICAÇÃO
-    // ----------------------------------------------------
-    async function fazerLogin() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      
-      statusMsg.style.color = 'var(--accent)';
-      statusMsg.innerText = "⏳ Autenticando...";
+    const registros = garagensDb.map(g => ({
+        garagem_id: g.id,
+        comando: comandoStr,
+        parametros: parametro,
+        lido: false
+    }));
 
-      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-      if (error) {
-        statusMsg.style.color = 'var(--offline)';
-        statusMsg.innerText = "❌ Acesso Negado: " + error.message;
-      } else {
-        statusMsg.style.color = 'var(--online)';
-        statusMsg.innerText = "✅ Credenciais aceitas! Carregando...";
-        verificarSessao();
+    const { error } = await supabaseClient.from('comandos_remotos').insert(registros);
+    
+    if (error) {
+        alert("❌ Falha no deploy remoto. Erro: " + error.message);
+    } else {
+        alert("✅ Deploy remoto enfileirado com sucesso para " + registros.length + " servidor(es)!");
+    }
+}
+
+// --- LÓGICA DO DASHBOARD ---
+function fetchAllData() {
+  if (typeof GARAGENS === 'undefined') {
+    document.getElementById('table-body').innerHTML =
+      '<tr class="empty-row"><td colspan="7" style="color:var(--offline)">Erro: arquivo garagens.js não carregado.</td></tr>';
+    return;
+  }
+
+  const promises = GARAGENS.map(garagem =>
+    fetch(`${garagem}_status.json?t=${Date.now()}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => ({ name: garagem, data, status: data ? 'ok' : 'error' }))
+      .catch(() => ({ name: garagem, data: null, status: 'error' }))
+  );
+
+  Promise.all(promises).then(results => {
+    GLOBAL_DATA = results;
+    document.getElementById('last-updated-text').textContent =
+      `sincronizado às ${new Date().toLocaleTimeString('pt-BR')}`;
+    document.getElementById('header-sub').textContent =
+      `${GARAGENS.length} garagem(ns) monitoradas em tempo real`;
+    renderTable();
+  });
+}
+
+function classificarStatus(d) {
+  const lastUp = new Date(d.last_update);
+  const now = new Date();
+  const cutoff = new Date();
+  cutoff.setHours(7, 30, 0, 0);
+
+  if (d.offline === "ERRO") return { cls: 'st-offline', label: 'Erro bot' };
+  if (now > cutoff && lastUp < cutoff) return { cls: 'st-stale', label: 'Antigo' };
+  return { cls: 'st-online', label: 'Online' };
+}
+
+function renderTable() {
+  const tbody = document.getElementById('table-body');
+  const selectedDateISO = document.getElementById('date-selector').value;
+  const targetDateBR = formatInputToJSONDate(selectedDateISO);
+  const filtro = document.getElementById('filtro-garagem').value.trim().toLowerCase();
+
+  document.getElementById('tg-header-date').textContent = targetDateBR ? targetDateBR : '(selecione)';
+  document.getElementById('kpi-tgs-note').textContent = targetDateBR ? `em ${targetDateBR}` : 'arquivos recebidos';
+
+  tbody.innerHTML = '';
+  let totalOnline = 0, totalOffline = 0, totalTGs = 0, staleCount = 0, garagensOk = 0;
+  let linhasHTML = '';
+
+  GLOBAL_DATA
+    .filter(item => !filtro || item.name.toLowerCase().includes(filtro))
+    .forEach(item => {
+      if (item.status === 'error' || !item.data) {
+        linhasHTML += `
+          <tr>
+            <td data-label="Status"><span class="status-pill st-offline"><span class="dot"></span>Sem dados</span></td>
+            <td data-label="Garagem" class="garagem-cell">${item.name}</td>
+            <td data-label="Online" class="num mono">–</td>
+            <td data-label="Offline" class="num mono">–</td>
+            <td data-label="TGs" class="num">–</td>
+            <td data-label="Atualizado">Falha na leitura</td>
+            <td data-label="Painel">–</td>
+          </tr>`;
+        return;
       }
-    }
 
-    async function recuperarSenha() {
-      const emailDigitado = prompt("Digite o e-mail cadastrado para qual deseja recuperar a senha:");
-      if (!emailDigitado || emailDigitado.trim() === "") return;
-      
-      statusMsg.style.color = 'var(--accent)';
-      statusMsg.innerText = "⏳ Solicitando redefinição...";
+      const d = item.data;
+      const st = classificarStatus(d);
+      if (st.cls === 'st-stale') staleCount++;
+      garagensOk++;
 
-      const { data, error } = await supabaseClient.auth.resetPasswordForEmail(emailDigitado.trim(), { redirectTo: window.location.href });
-      if (error) {
-          statusMsg.style.color = 'var(--offline)'; statusMsg.innerText = "❌ Erro: " + error.message;
-      } else {
-          statusMsg.style.color = 'var(--online)'; statusMsg.innerText = "✅ Link enviado para o e-mail!";
+      let tgCell = `<span class="tg-chip zero">0</span>`;
+      if (d.tgs_history && Array.isArray(d.tgs_history)) {
+        const found = d.tgs_history.find(h => h.data === targetDateBR);
+        if (found) {
+          const count = Number(found.count) || 0;
+          totalTGs += count;
+          const chip = count > 0
+            ? `<span class="tg-chip">${count}</span>`
+            : `<span class="tg-chip zero">0</span>`;
+          tgCell = (found.filename && found.filename !== 'N/A')
+            ? `<a class="tg-link" href="${found.filename}" download>${chip}</a>`
+            : chip;
+        }
       }
-    }
 
-    async function salvarNovaSenha() {
-        const novaSenha = document.getElementById('new-password').value;
-        const msg = document.getElementById('reset-status-msg');
+      const online = Number(d.online) || 0;
+      const offline = Number(d.offline) || 0;
+      totalOnline += online;
+      totalOffline += offline;
 
-        if (!novaSenha || novaSenha.length < 6) {
-            msg.style.color = 'var(--stale)'; msg.innerText = "⚠️ A senha requer no mínimo 6 caracteres."; return;
-        }
+      const lastUp = new Date(d.last_update);
+      const relTime = tempoRelativo(lastUp);
 
-        msg.style.color = 'var(--accent)'; msg.innerText = "⏳ Atualizando...";
-        const { data, error } = await supabaseClient.auth.updateUser({ password: novaSenha });
+      const linkPainel = (d.panel_url && d.panel_url !== 'N/A')
+        ? `<a class="panel-link" href="${d.panel_url}" target="_blank" rel="noopener">Abrir ↗</a>`
+        : `<a class="panel-link" href="COMUNICAÇÕES_${d.garagem}.html" target="_blank" rel="noopener">Local ↗</a>`;
 
-        if (error) {
-            msg.style.color = 'var(--offline)'; msg.innerText = "❌ Erro: " + error.message;
-        } else {
-            msg.style.color = 'var(--online)'; msg.innerText = "✅ Senha atualizada!";
-            setTimeout(() => {
-                window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
-                document.getElementById('reset-password-screen').classList.add('hidden');
-                verificarSessao(); 
-            }, 2000);
-        }
-    }
-
-    async function fazerLogout() { await supabaseClient.auth.signOut(); location.reload(); }
-
-    async function verificarSessao() {
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      if (!session) return;
-
-      const { data: perfil, error } = await supabaseClient.from('perfis').select('*').eq('id', session.user.id).single();
-      if (!error && perfil) {
-        currentUserProfile = perfil;
-        document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('mestre-role-badge').innerText = perfil.perfil.toUpperCase();
-        
-        const temMultiplasGaragens = perfil.garagens_acesso && perfil.garagens_acesso.length > 0;
-        
-        if (perfil.perfil === 'admin' || temMultiplasGaragens) {
-            mostrarTelaMestreAdmin();
-        } else {
-            abrirDashboardGaragem(perfil.garagem_id, "Sua Garagem");
-        }
-
-        carregarAlertas();
-        if(alertasInterval) clearInterval(alertasInterval);
-        alertasInterval = setInterval(carregarAlertas, 15000);
-
-      } else {
-          statusMsg.style.color = 'var(--offline)'; statusMsg.innerText = "❌ Erro: Perfil não encontrado.";
-      }
-    }
-
-    // ----------------------------------------------------
-    // ALERTAS
-    // ----------------------------------------------------
-    function toggleAlerts() { document.getElementById('alerts-panel').classList.toggle('active'); }
-
-    async function carregarAlertas() {
-        if (!currentUserProfile) return;
-        let query = supabaseClient.from('alertas_sistema').select('id, mensagem, criado_em, garagens(nome_garagem)').eq('lido', false).order('criado_em', { ascending: false }).limit(20);
-        
-        if (currentUserProfile.perfil !== 'admin') {
-            if (currentUserProfile.garagens_acesso && currentUserProfile.garagens_acesso.length > 0) {
-                query = query.in('garagem_id', currentUserProfile.garagens_acesso);
-            } else if (currentUserProfile.garagem_id) {
-                query = query.eq('garagem_id', currentUserProfile.garagem_id);
-            }
-        }
-
-        const { data, error } = await query;
-        if (error) return;
-
-        const count = data.length;
-        ['admin', 'garage'].forEach(type => {
-            let badge = document.getElementById(`bell-badge-${type}`);
-            if(badge) { badge.innerText = count; count > 0 ? badge.classList.remove('hidden') : badge.classList.add('hidden'); }
-        });
-        
-        if (count > 0) {
-            let html = '';
-            data.forEach(a => {
-                const d = new Date(a.criado_em);
-                const timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-                const badgeG = (currentUserProfile.perfil === 'admin' || (currentUserProfile.garagens_acesso && currentUserProfile.garagens_acesso.length > 1)) ? `<strong style="color:var(--accent)">[${a.garagens?.nome_garagem}]</strong> ` : '';
-                const msgLimpa = a.mensagem.replace('🚨', '').replace('⚠️', '').replace('❌', '').trim();
-                
-                html += `
-                <div class="alert-item" id="alert-${a.id}">
-                    <div class="alert-msg">${badgeG} ${msgLimpa} <span class="alert-time">Hoje às ${timeStr}</span></div>
-                    <button class="btn-dismiss" onclick="marcarAlertaLido(${a.id})" title="Dispensar">✖</button>
-                </div>`;
-            });
-            document.getElementById('alerts-list').innerHTML = html;
-        } else {
-            document.getElementById('alerts-list').innerHTML = `<div style="padding: 20px; text-align: center; color: var(--text-dim); font-size: 0.85rem;">Nenhum alerta pendente.</div>`;
-        }
-    }
-
-    async function marcarAlertaLido(id) {
-        await supabaseClient.from('alertas_sistema').update({ lido: true }).eq('id', id);
-        const alertEl = document.getElementById(`alert-${id}`); if(alertEl) alertEl.style.display = 'none';
-        carregarAlertas(); 
-    }
-
-    async function marcarTodosLidos() {
-        if (!currentUserProfile) return;
-        let query = supabaseClient.from('alertas_sistema').update({ lido: true }).eq('lido', false);
-        if (currentUserProfile.perfil !== 'admin') {
-            if (currentUserProfile.garagens_acesso && currentUserProfile.garagens_acesso.length > 0) { query = query.in('garagem_id', currentUserProfile.garagens_acesso); } 
-            else if (currentUserProfile.garagem_id) { query = query.eq('garagem_id', currentUserProfile.garagem_id); }
-        }
-        await query; carregarAlertas(); document.getElementById('alerts-panel').classList.remove('active');
-    }
-
-    // ----------------------------------------------------
-    // PAINEL MESTRE
-    // ----------------------------------------------------
-    function updateMasterTime() {
-        const now = new Date();
-        document.getElementById('master-last-update').innerText = `Atualizado às ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-    }
-
-    async function mostrarTelaMestreAdmin() {
-        document.getElementById('admin-screen').classList.remove('hidden');
-
-        if (currentUserProfile.perfil === 'admin') {
-            document.getElementById('btn-tab-comandos').style.display = 'inline-block';
-        }
-
-        const agora = new Date();
-        const hojeLocal = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`;
-        const dateInput = document.getElementById('date-selector-mestre');
-        if(!dateInput.value) dateInput.value = hojeLocal;
-
-        let queryGaragens = supabaseClient.from('garagens').select('*').order('nome_garagem');
-        if (currentUserProfile.perfil !== 'admin' && currentUserProfile.garagens_acesso) { queryGaragens = queryGaragens.in('id', currentUserProfile.garagens_acesso); }
-        const { data: garagens } = await queryGaragens; listaGaragens = garagens || [];
-
-        const ontem = new Date(); ontem.setDate(ontem.getDate() - 1);
-        let queryHist = supabaseClient.from('historico_comunicacoes').select('garagem_id, prefixo, erro').gte('data_hora', ontem.toISOString());
-        if (currentUserProfile.perfil !== 'admin' && currentUserProfile.garagens_acesso) { queryHist = queryHist.in('garagem_id', currentUserProfile.garagens_acesso); }
-        const { data: historicos } = await queryHist; historicoMestre = historicos || [];
-
-        await atualizarTGsMestre();
-        if (currentUserProfile.perfil === 'admin') renderizarCheckboxesComandos();
-    }
-
-    async function atualizarTGsMestre() {
-        const dateStr = document.getElementById('date-selector-mestre').value; if(!dateStr) return;
-        const btn = document.getElementById('btn-atualizar-mestre'); if(btn) btn.innerText = "⏳";
-
-        let queryTGs = supabaseClient.from('tgs_daily').select('*').eq('dt_iso', dateStr);
-        if (currentUserProfile.perfil !== 'admin' && currentUserProfile.garagens_acesso) { queryTGs = queryTGs.in('garagem_id', currentUserProfile.garagens_acesso); }
-        const { data: tgs } = await queryTGs; tgsMestre = tgs || [];
-        
-        const [y, m, d] = dateStr.split('-'); document.getElementById('tg-header-date').innerText = `${d}/${m}/${y}`;
-        updateMasterTime();
-        renderizarDadosMestre(); if(btn) btn.innerText = "Atualizar";
-    }
-
-    document.getElementById('filtro-garagem').addEventListener('input', renderizarDadosMestre);
-
-    function renderizarDadosMestre() {
-        let htmlTable = ''; let htmlStrip = '';
-        let totais = { online: 0, offline: 0, tgs: 0, garagensAtivas: 0 };
-        let histPorGaragem = {};
-        
-        const filtroTexto = document.getElementById('filtro-garagem').value.trim().toLowerCase();
-
-        historicoMestre.forEach(h => {
-            if(!histPorGaragem[h.garagem_id]) histPorGaragem[h.garagem_id] = {};
-            let err = h.erro;
-            if (err) { let eStr = String(err).trim().toLowerCase(); if (eStr === 'nan' || eStr === 'none' || eStr.includes('0000') || eStr.includes('ok') || eStr === '0') err = null; }
-            histPorGaragem[h.garagem_id][h.prefixo] = err ? 'ERRO' : 'OK';
-        });
-
-        const garagensFiltradas = listaGaragens.filter(g => g.nome_garagem.toLowerCase().includes(filtroTexto));
-
-        garagensFiltradas.forEach(g => {
-            let online = 0; let offline = 0;
-            if (histPorGaragem[g.id]) { Object.values(histPorGaragem[g.id]).forEach(status => { if (status === 'OK') online++; else offline++; }); }
-
-            let tgCount = tgsMestre.find(t => t.garagem_id === g.id)?.count || 0;
-            totais.online += online; totais.offline += offline; totais.tgs += tgCount;
-            if(online > 0 || offline > 0) totais.garagensAtivas++;
-
-            let stCls = 'st-offline'; let stLabel = 'Sem Dados'; let stripCls = 'bg-gray';
-            if (online > 0 && offline === 0) { stCls = 'st-online'; stLabel = 'Ativa'; stripCls = 'bg-ok'; }
-            else if (online > 0 && offline > 0) { stCls = 'st-online'; stLabel = 'Ativa'; stripCls = 'bg-warn'; }
-            else if (online === 0 && offline > 0) { stCls = 'st-offline'; stLabel = 'Offline'; stripCls = 'bg-err'; }
-
-            let tgChip = tgCount > 0 ? `<span class="tg-chip">${tgCount}</span>` : `<span class="tg-chip zero">0</span>`;
-
-            htmlStrip += `<div class="status-block ${stripCls}" onclick="abrirDashboardGaragem('${g.id}', '${g.nome_garagem}')">${g.nome_garagem}</div>`;
-
-            htmlTable += `
-            <tr>
-                <td data-label="Status"><span class="status-pill ${stCls}"><span class="dot"></span>${stLabel}</span></td>
-                <td data-label="Garagem" class="garagem-cell">${g.nome_garagem}</td>
-                <td data-label="Online Hoje" class="num mono ${online===0?'num-zero':'num-online'}">${online}</td>
-                <td data-label="Offline Hoje" class="num mono ${offline===0?'num-zero':'num-offline'}">${offline}</td>
-                <td data-label="TGs Filtrados" class="num" style="text-align: center;">${tgChip}</td>
-                <td data-label="Ação" style="text-align: right;"><button class="panel-link" onclick="abrirDashboardGaragem('${g.id}', '${g.nome_garagem}')">Abrir ↗</button></td>
-            </tr>`;
-        });
-
-        document.getElementById('status-blocks-container').innerHTML = htmlStrip || `<span style="color:var(--text-dim); font-size:0.8rem;">Sem dados na faixa de horário.</span>`;
-        document.getElementById('admin-garages-list').innerHTML = htmlTable || `<tr class="empty-row"><td colspan="6">Nenhuma garagem encontrada.</td></tr>`;
-        document.getElementById('kpi-online-total').innerText = totais.online;
-        document.getElementById('kpi-offline-total').innerText = totais.offline;
-        document.getElementById('kpi-tgs-total').innerText = totais.tgs;
-        document.getElementById('kpi-garagens-total').innerText = `${totais.garagensAtivas}/${listaGaragens.length}`;
-    }
-
-    let todasMarcadas = false;
-    function renderizarCheckboxesComandos() {
-        let html = `<label style="display:flex; align-items:center; gap:6px; font-size:0.8rem; background:var(--panel-2); padding:6px 10px; border-radius:6px; border:1px solid var(--border); cursor:pointer;"><input type="checkbox" onclick="toggleTodasGaragens()"> <span style="color:var(--accent); font-weight:bold;">Selecionar Todas</span></label>`;
-        listaGaragens.forEach(g => {
-            html += `<label style="display:flex; align-items:center; gap:6px; font-size:0.8rem; background:var(--bg); padding:6px 10px; border-radius:6px; border:1px solid var(--border); cursor:pointer;"><input type="checkbox" class="server-checkbox" value="${g.id}"> <span>${g.nome_garagem}</span></label>`;
-        });
-        document.getElementById('cmd-server-list').innerHTML = html;
-    }
-
-    function toggleTodasGaragens() {
-        todasMarcadas = !todasMarcadas;
-        document.querySelectorAll('.server-checkbox').forEach(cb => cb.checked = todasMarcadas);
-    }
-
-    async function dispararComando(comandoStr, requerParam = false, msgParam = "") {
-        const selecionados = Array.from(document.querySelectorAll('.server-checkbox:checked'));
-        if (selecionados.length === 0) { alert("⚠️ Selecione pelo menos uma garagem."); return; }
-        let parametro = null;
-        if (requerParam) { parametro = prompt(msgParam); if (!parametro || parametro.trim() === "") return; }
-        if(!confirm(`Enviar comando [${comandoStr}] para ${selecionados.length} servidor(es)?`)) return;
-
-        const registros = selecionados.map(cb => ({ garagem_id: cb.value, comando: comandoStr, parametros: parametro, lido: false }));
-        const { error } = await supabaseClient.from('comandos_remotos').insert(registros);
-        if (error) alert("❌ Erro ao enviar comando."); else alert("✅ Comando enviado para a fila de execução!");
-    }
-
-    // ----------------------------------------------------
-    // DASHBOARD INDIVIDUAL
-    // ----------------------------------------------------
-    function voltarParaAdmin() {
-        document.getElementById('app-screen').classList.add('hidden');
-        document.getElementById('admin-screen').classList.remove('hidden');
-        if(chartTrend) chartTrend.destroy(); if(chartStatus) chartStatus.destroy();
-    }
-
-    async function abrirDashboardGaragem(garagemId, garagemNome) {
-        document.getElementById('admin-screen').classList.add('hidden');
-        document.getElementById('app-screen').classList.remove('hidden');
-        document.getElementById('garage-name-display').innerText = garagemNome;
-        carregarDadosDoBanco(garagemId);
-    }
-
-    async function carregarDadosDoBanco(garagemId) {
-      document.getElementById('indiv-last-update').innerText = "Baixando...";
-      let d = new Date(); d.setDate(d.getDate() - 15);
-      const { data, error } = await supabaseClient.from('historico_comunicacoes').select('*').eq('garagem_id', garagemId).gte('data_hora', d.toISOString()).order('data_hora', { ascending: false }).limit(5000);
-      if (error) return;
-
-      FROTA = []; METADATA = {}; HISTORY = {};
-      data.forEach(row => {
-          const v = row.prefixo; if (!FROTA.includes(v)) FROTA.push(v); if (!HISTORY[v]) HISTORY[v] = [];
-          let err = row.erro; if (err) { let eStr = String(err).trim().toLowerCase(); if (eStr === 'nan' || eStr === 'none' || eStr.includes('0000') || eStr.includes('ok') || eStr === '0') err = null; }
-          HISTORY[v].push({ d: row.data_hora.replace('T', ' ').substring(0, 19), e: err });
-          if (!METADATA[v]) METADATA[v] = { versao: row.versao, eod: row.eod, serie: row.serie };
-      });
-
-      const now = new Date();
-      document.getElementById('indiv-last-update').innerText = `Sync: ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-      renderDashboardIndividual();
-    }
-
-    function renderDashboardIndividual() {
-        const lists = { online: document.getElementById('list-online'), offline: document.getElementById('list-offline'), critical: document.getElementById('list-critical') };
-        Object.values(lists).forEach(l => l.innerHTML = '');
-
-        let counts = { online: 0, offline: 0, critical: 0, total: FROTA.length };
-        const agora = new Date();
-        const dateEndObj = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate(), 23, 59, 59);
-        const dateStartObj = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate(), 0, 0, 0);
-
-        FROTA.forEach(veiculo => {
-            const logs = HISTORY[veiculo] || []; let lastLog = logs.length > 0 ? logs[0] : null;
-            if (!lastLog) { counts.offline++; return; }
-
-            const lastDate = new Date(lastLog.d.replace(' ', 'T'));
-            const isToday = (lastDate >= dateStartObj && lastDate <= dateEndObj);
-            const meta = METADATA[veiculo] || {};
-
-            if (isToday) {
-                if (lastLog.e) {
-                    counts.critical++;
-                    lists.critical.insertAdjacentHTML('beforeend', `<tr><td data-label="Prefixo" style="font-weight:bold;">${veiculo}</td><td data-label="Erro" style="color:var(--offline)">${lastLog.e}</td><td data-label="Hora" class="mono">${lastLog.d.split(' ')[1]}</td><td data-label="Versão">${meta.versao || '-'}</td></tr>`);
-                } else {
-                    counts.online++;
-                    lists.online.insertAdjacentHTML('beforeend', `<div class="v-card"><div class="v-id">${veiculo}<span class="status-pill st-online" style="padding:0;"><span class="dot" style="margin:0;"></span></span></div><div class="v-meta">🕒 ${lastLog.d.split(' ')[1]}<br>v${meta.versao || '?'} | EOD ${meta.eod || '?'}</div></div>`);
-                }
-            } else {
-                counts.offline++;
-                lists.offline.insertAdjacentHTML('beforeend', `<tr><td data-label="Prefixo" style="font-weight:bold;">${veiculo}</td><td data-label="Status"><span class="tg-chip zero">TIMEOUT</span></td><td data-label="Última Comp." class="mono">${lastLog.d}</td></tr>`);
-            }
-        });
-
-        document.getElementById('kpi-online').innerText = counts.online;
-        document.getElementById('kpi-offline').innerText = counts.offline;
-        document.getElementById('kpi-critical').innerText = counts.critical;
-        document.getElementById('kpi-total').innerText = counts.total;
-        renderCharts(counts);
-    }
-
-    function renderCharts(counts) {
-        Chart.defaults.font.family = "'Inter', sans-serif"; Chart.defaults.color = '#8a96b3';
-        if(chartStatus) chartStatus.destroy();
-        chartStatus = new Chart(document.getElementById('statusChart').getContext('2d'), {
-            type: 'doughnut',
-            data: { labels: ['Online', 'Erro', 'Offline'], datasets: [{ data: [counts.online, counts.critical, counts.offline], backgroundColor: ['#34d399', '#fb6b6b', '#f0ac3f'], borderWidth: 0 }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } } }
-        });
-
-        const labels = []; const dataOnline = []; const dataErrors = [];
-        let baseDate = new Date();
-        for (let i = 14; i >= 0; i--) {
-            let d = new Date(baseDate); d.setDate(d.getDate() - i);
-            let isoDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-            labels.push(`${isoDate.split('-')[2]}/${isoDate.split('-')[1]}`);
-            let dayOnline = 0; let dayError = 0;
-            FROTA.forEach(v => { const log = (HISTORY[v] || []).find(l => l.d.startsWith(isoDate)); if(log) { if(log.e) dayError++; else dayOnline++; } });
-            dataOnline.push(dayOnline); dataErrors.push(dayError);
-        }
-
-        if(chartTrend) chartTrend.destroy();
-        chartTrend = new Chart(document.getElementById('trendChart').getContext('2d'), {
-            type: 'line',
-            data: { labels: labels, datasets: [ { label: 'Sucesso', data: dataOnline, borderColor: '#34d399', backgroundColor: 'rgba(52, 211, 153, 0.1)', fill: true, tension: 0.3, borderWidth: 2, pointRadius: 1 }, { label: 'Erros', data: dataErrors, borderColor: '#fb6b6b', backgroundColor: 'transparent', tension: 0.3, borderWidth: 2, pointRadius: 1 } ] },
-            options: { responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: 'index' }, plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#22304d' }, beginAtZero: true }, x: { grid: { display: false } } } }
-        });
-    }
-
-    // ----------------------------------------------------
-    // INICIALIZAÇÃO
-    // ----------------------------------------------------
-    let isRecoveryMode = window.location.hash.includes('type=recovery');
-    supabaseClient.auth.onAuthStateChange(async (event, session) => {
-        if (event === 'PASSWORD_RECOVERY') {
-            isRecoveryMode = true;
-            document.getElementById('login-screen').classList.add('hidden');
-            document.getElementById('admin-screen').classList.add('hidden');
-            document.getElementById('app-screen').classList.add('hidden');
-            document.getElementById('reset-password-screen').classList.remove('hidden');
-        }
+      linhasHTML += `
+        <tr>
+          <td data-label="Status"><span class="status-pill ${st.cls}"><span class="dot"></span>${st.label}</span></td>
+          <td data-label="Garagem" class="garagem-cell">${d.garagem}</td>
+          <td data-label="Online" class="num mono ${online === 0 ? 'zero' : 'num-online'}">${online}</td>
+          <td data-label="Offline" class="num mono ${offline === 0 ? 'zero' : 'num-offline'}">${offline}</td>
+          <td data-label="TGs" class="num">${tgCell}</td>
+          <td data-label="Atualizado"><div class="updated-cell">${lastUp.toLocaleString('pt-BR')}<div class="rel">${relTime}</div></div></td>
+          <td data-label="Painel">${linkPainel}</td>
+        </tr>`;
     });
 
-    window.onload = () => {
-      if (isRecoveryMode) {
-          document.getElementById('login-screen').classList.add('hidden');
-          document.getElementById('reset-password-screen').classList.remove('hidden');
+  tbody.innerHTML = linhasHTML || `<tr class="empty-row"><td colspan="7">Nenhuma garagem encontrada para esse filtro.</td></tr>`;
+
+  if (linhasHTML) {
+    tbody.innerHTML += `
+      <tr class="totals-row">
+        <td colspan="2" data-label="" class="garagem-cell">Total do grupo</td>
+        <td data-label="Online" class="num mono">${totalOnline}</td>
+        <td data-label="Offline" class="num mono">${totalOffline}</td>
+        <td data-label="TGs" class="num mono">${totalTGs}</td>
+        <td colspan="2"></td>
+      </tr>`;
+  }
+
+  document.getElementById('kpi-online').textContent = totalOnline;
+  document.getElementById('kpi-offline').textContent = totalOffline;
+  document.getElementById('kpi-tgs').textContent = totalTGs;
+  document.getElementById('kpi-stale').textContent = staleCount;
+  document.getElementById('kpi-total-garagens').textContent = `${garagensOk}/${GLOBAL_DATA.length}`;
+}
+
+function tempoRelativo(d) {
+  if (isNaN(d.getTime())) return '';
+  const diffMin = Math.round((Date.now() - d.getTime()) / 60000);
+  if (diffMin < 1) return 'agora mesmo';
+  if (diffMin < 60) return `há ${diffMin} min`;
+  const diffH = Math.round(diffMin / 60);
+  if (diffH < 24) return `há ${diffH}h`;
+  return `há ${Math.round(diffH / 24)}d`;
+}
+
+/* ============================================================
+   EXPORTAÇÃO CSV — resumo por garagem + listagem completa de TGs
+   ============================================================ */
+
+function csvEscape(valor) {
+  const s = (valor === null || valor === undefined) ? '' : String(valor);
+  if (s.includes(';') || s.includes('"') || s.includes('\n')) {
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  return s;
+}
+function linhaCSV(campos) { return campos.map(csvEscape).join(';'); }
+
+async function buscarListaTGsDaGaragem(filename) {
+  try {
+    const resp = await fetch(`${filename}?t=${Date.now()}`);
+    if (!resp.ok) return { ok: false, erro: `HTTP ${resp.status}`, nomes: [] };
+    const texto = await resp.text();
+    const nomes = texto.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    return { ok: true, erro: null, nomes };
+  } catch (e) {
+    return { ok: false, erro: e.message || 'falha ao buscar', nomes: [] };
+  }
+}
+
+async function exportarCSV() {
+  const selectedDateISO = document.getElementById('date-selector').value;
+  const targetDateBR = formatInputToJSONDate(selectedDateISO);
+  const statusEl = document.getElementById('export-status-text');
+  const btn = document.getElementById('btn-export-csv');
+
+  if (!targetDateBR) { alert('Selecione uma data válida antes de exportar.'); return; }
+  if (!GLOBAL_DATA.length) { alert('Os dados das garagens ainda não foram carregados. Aguarde e tente novamente.'); return; }
+
+  btn.disabled = true;
+  const textoOriginal = btn.textContent;
+  btn.textContent = '⏳ Gerando...';
+  statusEl.textContent = '';
+
+  const agora = new Date();
+  const hojeBR = `${String(agora.getDate()).padStart(2,'0')}/${String(agora.getMonth()+1).padStart(2,'0')}/${agora.getFullYear()}`;
+
+  const linhasResumo = [];
+  const linhasDetalhe = [];
+  let totalOnline = 0, totalOffline = 0, totalTGs = 0, garagensComFalha = 0;
+
+  for (const item of GLOBAL_DATA) {
+    if (item.status === 'error' || !item.data) {
+      linhasResumo.push([item.name, 'Falha na leitura', '', '', '']);
+      garagensComFalha++;
+      continue;
+    }
+
+    const d = item.data;
+    const historyFound = (d.tgs_history || []).find(h => h.data === targetDateBR);
+    const count = historyFound ? (Number(historyFound.count) || 0) : 0;
+
+    totalOnline += Number(d.online) || 0;
+    totalOffline += Number(d.offline) || 0;
+    totalTGs += count;
+
+    linhasResumo.push([d.garagem, 'OK', d.online, d.offline, count]);
+
+    if (historyFound && historyFound.filename && historyFound.filename !== 'N/A') {
+      statusEl.textContent = `Baixando lista de TGs: ${d.garagem}...`;
+      const resultado = await buscarListaTGsDaGaragem(historyFound.filename);
+      if (resultado.ok) {
+        if (resultado.nomes.length === 0) {
+          linhasDetalhe.push([d.garagem, targetDateBR, '(arquivo de lista vazio)']);
+        }
+        for (const nomeArquivo of resultado.nomes) {
+          linhasDetalhe.push([d.garagem, targetDateBR, nomeArquivo]);
+        }
       } else {
-          supabaseClient.auth.getSession().then(({ data: { session } }) => { if (session) verificarSessao(); });
+        linhasDetalhe.push([d.garagem, targetDateBR, `(erro ao baixar lista: ${resultado.erro})`]);
       }
-    };
+    } else if (count > 0) {
+      linhasDetalhe.push([d.garagem, targetDateBR, '(sem arquivo detalhado publicado)']);
+    }
+  }
+
+  linhasResumo.push(['TOTAL GRUPO', '', totalOnline, totalOffline, totalTGs]);
+
+  const partes = [];
+  partes.push(`RESUMO POR GARAGEM - Online/Offline: HOJE (${hojeBR}) | TGs: ${targetDateBR}`);
+  partes.push(linhaCSV(['Garagem', 'Status', 'Online (hoje)', 'Offline (hoje)', `TGs (${targetDateBR})`]));
+  linhasResumo.forEach(r => partes.push(linhaCSV(r)));
+  partes.push('');
+  partes.push(`LISTAGEM COMPLETA DE TGS - ${targetDateBR}`);
+  partes.push(linhaCSV(['Garagem', 'Data', 'Arquivo TG']));
+  if (linhasDetalhe.length === 0) {
+    partes.push(linhaCSV(['(nenhum arquivo encontrado para essa data)', '', '']));
+  } else {
+    linhasDetalhe.forEach(r => partes.push(linhaCSV(r)));
+  }
+
+  const csvContent = '\uFEFF' + partes.join('\r\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `TGs_Grupo_${selectedDateISO}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  statusEl.textContent = garagensComFalha > 0
+    ? `CSV gerado. ⚠️ ${garagensComFalha} garagem(ns) sem dados no momento.`
+    : 'CSV gerado com sucesso.';
+
+  btn.disabled = false;
+  btn.textContent = textoOriginal;
+}
 </script>
 </body>
 </html>
